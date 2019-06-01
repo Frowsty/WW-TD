@@ -24,7 +24,6 @@ pygame.display.set_caption("WW - TD")
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont("Arial", 20)
-type_text = font.render("", True, (255,255,255))
 
 start_game = False
 how_to = False
@@ -32,7 +31,7 @@ how_to = False
 while True:
 
     # set max ticks per second (FPS)
-    clock.tick(60)
+    clock.tick(120)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
@@ -41,6 +40,11 @@ while True:
     mouse_x, mouse_y = pygame.mouse.get_pos()
 
     screen.fill(BLACK)
+
+    # To prevent screen from blinking black we're calling draw_howto first if
+    # player choose How To screen in main menu
+    if how_to == True:
+        draw_howto(screen, mouse_x, mouse_y, font)
 
     # Main menu
     menu_input = menu_system(mouse_x, mouse_y)
@@ -53,10 +57,9 @@ while True:
         start_game = True
     if menu_input == "HOWTO":
         how_to = True
-    
-    # if start_game == True:
-        # call game function
-    # if how_to == True:
-        # call how to screen
+    if menu_input == "MAIN_MENU":
+        how_to = False
+        start_game = False
+
 
     pygame.display.update()

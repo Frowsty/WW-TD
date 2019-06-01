@@ -158,34 +158,6 @@ class GroupBox:
         pygame.draw.line(screen, outl_color, [self.x, (self.y + self.height)], [(self.x + self.width) + (outl_thickness / 2), (self.y + self.height)], outl_thickness)
         pygame.draw.line(screen, outl_color, [(self.x + self.width), self.y], [(self.x + self.width), (self.y + self.height) + (outl_thickness / 2)], outl_thickness)
 
-        # # draw outline shadow
-        # # top outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x - outl_thickness + 4, self.y - outl_thickness + 4],
-        #                                        [self.x + self.width + outl_thickness - 4, self.y - outl_thickness + 4], 2)
-        # # left outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x - outl_thickness + 4, self.y - outl_thickness + 4], 
-        #                                        [self.x - outl_thickness + 4, self.y + self.height + outl_thickness - 4], 2)
-        # # right outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x + self.width + outl_thickness - 4, self.y - outl_thickness + 4], 
-        #                                        [self.x + self.width + outl_thickness - 4, self.y + self.height + outl_thickness - 4], 2)
-        # # bottom outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x - outl_thickness + 4, self.y + self.height + outl_thickness - 4],
-        #                                        [self.x + self.width + outl_thickness - 3, self.y + self.height + outl_thickness - 4], 2)
-
-        # # draw inline shadow
-        # # top outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x + 6, self.y + 5],
-        #                                        [self.x + self.width - 5, self.y + 5], 2)
-        # # left outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x + 6, self.y + 5], 
-        #                                        [self.x + 6, self.y + self.height - 5], 2)
-        # # right outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x + self.width - 5, self.y + 5], 
-        #                                        [self.x + self.width - 5, self.y + self.height - 5], 2)
-        # # bottom outline
-        # pygame.draw.line(screen, (25, 25, 25), [self.x + 6, self.y + self.height - 5],
-        #                                        [self.x + self.width - 4, self.y + self.height - 5], 2)                            
-
         if self.text != '':
             text = scale_text((self.width, (self.height * 0.15)), self.text, text_color)
             #text = font.render(self.text, 1, text_color)
