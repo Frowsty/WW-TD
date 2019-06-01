@@ -12,7 +12,7 @@ class Player():
         self.reverse_frames = False
         self.player_facing = 0
 
-    def reverse_animation(self):
+    def cycle_animation(self):
 
         if self.reverse_frames == True:
             self.walkcount -= 1
@@ -28,22 +28,22 @@ class Player():
 
         if pygame.key.get_pressed()[pygame.K_w]:
             self.cur_pos[1] -= 10
-            self.reverse_animation()
+            self.cycle_animation()
             self.player_facing = 0
 
         if pygame.key.get_pressed()[pygame.K_a]:
             self.cur_pos[0] -= 10
-            self.reverse_animation()
+            self.cycle_animation()
             self.player_facing = 1
 
         if pygame.key.get_pressed()[pygame.K_s]:
             self.cur_pos[1] += 10
-            self.reverse_animation()
+            self.cycle_animation()
             self.player_facing = 2
 
         if pygame.key.get_pressed()[pygame.K_d]:
             self.cur_pos[0] += 10
-            self.reverse_animation()
+            self.cycle_animation()
             self.player_facing = 3
     
     def draw(self, screen):
