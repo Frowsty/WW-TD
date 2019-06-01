@@ -58,7 +58,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
             for i in range(len(story_line)):
                 render_story = font.render(story_line[i], True, (0, 0, 0))
                 pos += 30 # moves the following line down 30 pixels
-                #screen.blit(render_story, (howto_story.x + 10, howto_story.y + 60 + pos))
+                screen.blit(render_story, (howto_story.x + 10, howto_story.y + 60 + pos))
     else:
         howto_story.height -= 25
         if howto_story.height <= 0:
