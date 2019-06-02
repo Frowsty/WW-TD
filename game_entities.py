@@ -74,7 +74,7 @@ class Player(pygame.sprite.Sprite):
             if len(self.bullets) == 0:
                 self.reloading = False
 
-        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 0:
+        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
             self.fired_tick = pygame.time.get_ticks()
             if len(self.bullets) < self.ammo:
 
@@ -111,17 +111,17 @@ class Projectile(pygame.sprite.Sprite):
     def draw(self,screen):
         if self.direction == 0:
             self.velocity = -45
-            if self.y <= 960 and self.y >= 0:
+            if self.y < 960 and self.y > 0:
                 screen.blit(pygame.transform.rotate(self.bullet, 0), (self.x, self.y))
         if self.direction == 1:
             self.velocity = -45
-            if self.x <= 1280 and self.x >= 0:
+            if self.x < 1280 and self.x > 0:
                 screen.blit(pygame.transform.rotate(self.bullet, 90), (self.x, self.y))
         if self.direction == 2:
             self.velocity = 45
-            if self.y <= 960 and self.y >= 0:
+            if self.y < 960 and self.y > 0:
                 screen.blit(pygame.transform.rotate(self.bullet, 180), (self.x, self.y))
         if self.direction == 3:
             self.velocity = 45
-            if self.x <= 1280 and self.x >= 0:
+            if self.x < 1280 and self.x > 0:
                 screen.blit(pygame.transform.rotate(self.bullet, -90), (self.x, self.y))
