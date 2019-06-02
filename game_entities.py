@@ -74,7 +74,7 @@ class Player(pygame.sprite.Sprite):
             if len(self.bullets) == 0:
                 self.reloading = False
 
-        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 0:
+        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
             self.fired_tick = pygame.time.get_ticks()
             if len(self.bullets) < self.ammo:
 
