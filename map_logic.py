@@ -142,6 +142,15 @@ class Base_grid(pygame.sprite.Sprite):
         screen.blit(overlay, (0, 0))
         screen_Grid(screen, 14, 10, _Multiplier)
 
+class counter(pygame.sprite.Sprite):
+    def __init__(self, screen, pos, start_time):
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []
+        self.load_images()
+
+    def load_images(self):
+        #todo img = get_image('./images/counter/')
+        pass
 
 class map_Player_Icon(pygame.sprite.Sprite):
     def __init__(self, screen, pos, waypoints):
@@ -159,7 +168,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.waypoint_index = 0
         self.target = self.waypoints[self.waypoint_index]
         self.target_radius = 50
-        self.moving = True
+        self.moving = False
 
     def load_images(self):
         img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
