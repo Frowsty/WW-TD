@@ -28,6 +28,9 @@ menu_howto = fp.Button(BLUE, 260, 250, 250, 50, "How to play")
 menu_quit = fp.Button(RED, 260, 320, 250, 50, "Quit!")
 menu_back = fp.Button(WHITE, 10, 10, 50, 20, "<<<")
 
+# InGame interface
+mute_sound = fp.Checkbox(RED, GREEN, 80, 10, 50, 1, "Sound:", False)
+
 # Howto menu objects
 howto_story_btn = fp.Button(GREEN, 200, 180, 250, 50, "Story")
 howto_story = fp.GroupBox(203, 235, 240, 0, "Story")
@@ -50,7 +53,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
 
     if story == True:
         howto_story_btn.text = "Close"
-        howto_story.height += 25
+        howto_story.height += 35
         howto_story.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
         if howto_story.height >= 300:
             howto_story.height = 300
@@ -60,7 +63,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
                 pos += 30 # moves the following line down 30 pixels
                 screen.blit(render_story, (howto_story.x + 10, howto_story.y + 60 + pos))
     else:
-        howto_story.height -= 25
+        howto_story.height -= 35
         if howto_story.height <= 0:
             howto_story.height = 0
             howto_story_btn.text = "Story"
@@ -68,7 +71,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
             howto_story.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
     if ctrls == True:
         howto_ctrls_btn.text = "Close"
-        howto_ctrls.height += 25
+        howto_ctrls.height += 35
         howto_ctrls.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
         if howto_ctrls.height >= 300:
             howto_ctrls.height = 300
@@ -78,7 +81,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
                 pos += 30 # moves the following line down 30 pixels
                 screen.blit(render_ctrls, (howto_ctrls.x + 50, howto_ctrls.y + 60 + pos))
     else:
-        howto_ctrls.height -= 25
+        howto_ctrls.height -= 35
         if howto_ctrls.height <= 0:
             howto_ctrls.height = 0
             howto_ctrls_btn.text = "Controls"
@@ -94,7 +97,7 @@ def draw_mm(screen, mouse_x, mouse_y):
     menu_howto.draw(screen)
     menu_quit.draw(screen)
 
-def draw_howto(screen, mouse_x, mouse_y, font):
+def draw_howto(screen, mouse_x, mouse_y, font, did_game_start):
 
     global show_story, show_ctrls
     screen.blit(menu_bg, (0,0))
@@ -109,20 +112,26 @@ def draw_howto(screen, mouse_x, mouse_y, font):
     if howto_ctrls_btn.clicked(mouse_x, mouse_y) == True:
         show_ctrls = not show_ctrls
 
-    howto_page(screen, mouse_x, mouse_y, show_story, show_ctrls, font)
+    if did_game_start == False:
+        howto_page(screen, mouse_x, mouse_y, show_story, show_ctrls, font)
 
-def menu_system(mouse_x, mouse_y):
+def menu_system(mouse_x, mouse_y, did_game_start):
     global show_ctrls, show_story
-    if menu_quit.clicked(mouse_x, mouse_y) == True:
+    if menu_quit.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         return "QUIT"
-    if menu_start.clicked(mouse_x, mouse_y) == True:
+    if menu_start.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         return "START"
-    if menu_howto.clicked(mouse_x, mouse_y) == True:
+    if menu_howto.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         return "HOWTO"
-    if menu_back.clicked(mouse_x, mouse_y) == True:
+    if menu_back.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         show_ctrls = False
         howto_ctrls.height = 0
         show_story = False
         howto_story.height = 0
         
         return "MAIN_MENU"
+
+def ingame_interface(screen, mouse_x, mouse_y):
+    
+    mute_sound.draw(screen, mouse_x, mouse_y, 2, text_color=WHITE)
+

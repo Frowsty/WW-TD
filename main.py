@@ -94,18 +94,22 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
 
     if start_game == True:
         screen.blit(pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960)), (0,0))
+        ui.ingame_interface(screen, mouse_x, mouse_y)
         player.draw(screen)
         player.actions(screen, kb_input)
+
+        for bullet in player.bullets:
+            bullet.draw(screen)
         
     if how_to == True:
-        ui.draw_howto(screen, mouse_x, mouse_y, font)
+        ui.draw_howto(screen, mouse_x, mouse_y, font, start_game)
 
     if Map_Shown == True:
         map_Sprite_Group.draw(screen)
         terrain_sprites.draw(screen)
 
     # Main menu
-    menu_input = ui.menu_system(mouse_x, mouse_y)
+    menu_input = ui.menu_system(mouse_x, mouse_y, start_game)
     if start_game == False and how_to == False:
         ui.update_mm()
         ui.draw_mm(screen, mouse_x, mouse_y)
