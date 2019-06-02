@@ -184,17 +184,14 @@ def generate_Map(screen, _Multiplier, map_Sprite_Group):
     num_Of_Rows = 10
     num_Of_Col = 14
 
+    #starting node's locational data
     start_x = 1114
-
     selection = [40, 122, 204, 286, 368, 450, 532, 614, 696, 778]
-
     start_y = random.choice(selection)
-
-
     start = node(start_x, start_y, './images/placeholder/start.png', screen, _Multiplier)
-
     map_Sprite_Group.add(start)
 
+    #trail logic
     o_Trail = road(screen, _Multiplier, start_x, start_y)
     trail_Nodes = []
     trail_Nodes.append(o_Trail.moving())
@@ -202,9 +199,11 @@ def generate_Map(screen, _Multiplier, map_Sprite_Group):
     while trail_Nodes[-1][0] > 122:
         trail_Nodes.append(o_Trail.moving())
 
-
+    #end point creation
     end_Point = node(50, trail_Nodes[-1][1], './images/placeholder/end.png', screen, _Multiplier)
     map_Sprite_Group.add(end_Point)
+
+
 
 
 
@@ -212,6 +211,57 @@ def generate_Map(screen, _Multiplier, map_Sprite_Group):
     return trail_Nodes, end_Point, start
 
 
+
+def poi_Generation(trail_Nodes):
+
+    # poi generation
+    num_Of_Poi = random.randint(12, 20)
+    names_Of_Poi = ["Hunter's Quarry", "Johnson's Sack", "Havagard's Hole", "Rustic Peak", "EastWard Tumble",
+                    "Frank's Redhot",
+                    "William's Child", "Magestic Gultch", "Trader's Point", "Kirkland's Endevor", "Widow's Peak",
+                    "Chicken Run",
+                    "Dodge City", "Angel's Howl", "Desolation Vale", "Jaggedally", "Violence Worth", "Barehallow",
+                    "Bonetooth",
+                    "Hope's Peak", "Wrath Brook", "Sandflats", "Talon's River", "Bruisestead", "Harmony Crag",
+                    "Snake Canyon",
+                    "Lightbrook", "Skullalley", "Phantom Rock"
+                    ]
+    closest_Point = random.sample(trail_Nodes, num_Of_Poi)
+    dir = 'not'
+
+    list_Of_Poi = []
+
+    for i in range(len(closest_Point)):
+        r = random.randint(0, 10)
+
+        if r % 2 == 0:
+            y_coord = closest_Point[i][1] + random.randint(0, 15)
+            dir = 'positive'
+        else:
+            y_coord = closest_Point[i][1] - random.randint(0, 15)
+            dir = 'negative'
+        x_coord = closest_Point[i][0]
+        name_Choice = random.choice(names_Of_Poi)
+        list_Of_Poi.append((name_Choice, (x_coord, y_coord), dir))
+        names_Of_Poi.remove(name_Choice)
+
+    return list_Of_Poi
+
+
+def draw_Poi(list_Of_Poi, screen):
+
+    for i in range(len(list_Of_Poi)):
+        print(i)
+        x_coord = list_Of_Poi[i][1][0]
+        y_coord = list_Of_Poi[i][1][1]
+        pygame.draw.circle(screen, GREEN, (x_coord, y_coord), 5)
+        font = pygame.freetype.Font(None, 10)
+        dir = list_Of_Poi[i][2]
+        name_Choice = list_Of_Poi[i][0]
+        if dir == 'positive':
+            font.render_to(screen, (x_coord + 10, y_coord + 10), name_Choice)
+        elif dir == 'negative':
+            font.render_to(screen, (x_coord - 10, y_coord - 10), name_Choice)
 
 
 
@@ -231,7 +281,7 @@ def main(screen, _Multiplier, map_Sprite_Group):
     done = False
     all_Sprite_Group = pygame.sprite.Group()
     trail_Points, end_Point, start = generate_Map(screen, _Multiplier, map_Sprite_Group)
-    
+    list_Of_Poi = poi_Generation(trail_Points)
 
 
     while not done:
@@ -252,7 +302,7 @@ def main(screen, _Multiplier, map_Sprite_Group):
         for i in range(len(trail_Points) - 2):
            pygame.draw.line(screen, DK_PURPLE, (trail_Points[i][0], trail_Points[i][1]), (trail_Points[i+1][0], trail_Points[i+1][1]) )
         pygame.draw.line(screen, DK_PURPLE, (trail_Points[-2][0], trail_Points[-2][1]), (end_Point.return_Coords()))
-
+        draw_Poi(list_Of_Poi, screen)
 
         pygame.display.flip()
 
