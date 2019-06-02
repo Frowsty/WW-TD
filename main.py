@@ -4,6 +4,7 @@ from pygame import font
 import random
 import ui_components as ui
 import game_entities as entities
+from time import sleep
 
 import wang
 import a_star
@@ -126,8 +127,10 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
             quit()
-        if event.type == pygame.key.get_pressed()[pygame.K_F3]:
+    
+    if pygame.key.get_pressed()[pygame.K_F3]:
             Map_Shown = not Map_Shown
+            sleep(0.10)
 
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
