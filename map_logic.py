@@ -97,19 +97,21 @@ class CL_Terrain(pygame.sprite.Sprite):
 
 #part of the map
 
-class Game_Map(pygame.sprite.Sprite):
-    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites):
+class Base_grid(pygame.sprite.Sprite):
+    def __init__(self, screen, _Multiplier):
         pygame.sprite.Sprite.__init__(self)
-        self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites)
-        self.list_Of_Poi = self.poi_Generation(self.trail_Points)
+        self.image = get_image('images/placeholder/empty.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 0
 
 
-    def screen_Grid(self, screen, columns, rows,_Multiplier):
+    def screen_Grid(self, screen, columns, rows, _Multiplier):
 
-        width = 80 *_Multiplier
-        height = 80 *_Multiplier
-        margin = round(2 *_Multiplier)
-        upper_Left_X = screen.get_width() - (((columns +1) * width) + ((columns + 2) * margin))
+        width = 80 * _Multiplier
+        height = 80 * _Multiplier
+        margin = round(2 * _Multiplier)
+        upper_Left_X = screen.get_width() - (((columns + 1) * width) + ((columns + 2) * margin))
         upper_Left_Y = screen.get_height() - (((rows + 1) * height) + ((rows + 2) * margin))
         lower_Right_Y = upper_Left_Y + (rows * height) + ((rows + 1) * margin)
         lower_Right_X = upper_Left_X + (columns * width) + (columns * margin)
@@ -118,19 +120,34 @@ class Game_Map(pygame.sprite.Sprite):
         upper_Right_X = lower_Right_X
         upper_Right_Y = upper_Left_Y
 
-
-
-        pygame.draw.rect(screen, (WHITE), ((upper_Left_X, upper_Left_Y), (lower_Right_X - (width //2) - (margin * 3), lower_Right_Y - (height //2) - (margin * 8))))
+        pygame.draw.rect(screen, (WHITE), ((upper_Left_X, upper_Left_Y), (
+        lower_Right_X - (width // 2) - (margin * 3), lower_Right_Y - (height // 2) - (margin * 8))))
         pygame.draw.line(screen, BLACK, (upper_Left_X, upper_Left_Y), (upper_Right_X, upper_Right_Y), margin)
         for row in range(rows):
             for column in range(columns):
                 pygame.draw.line(screen, BLACK, (upper_Left_X, upper_Left_Y + (row * height) + (row * margin)),
-                                 (upper_Right_X, upper_Right_Y + (row * height) + (row * margin)))  # horizontal line
-                pygame.draw.line(screen, BLACK, (upper_Left_X + (column * width) + (column * margin), upper_Left_Y), ((upper_Left_X + (column * width) + (column * margin) , lower_Left_Y)))  # vertical line
+                                 (
+                                 upper_Right_X, upper_Right_Y + (row * height) + (row * margin)))  # horizontal line
+                pygame.draw.line(screen, BLACK, (upper_Left_X + (column * width) + (column * margin), upper_Left_Y),
+                                 ((upper_Left_X + (column * width) + (column * margin),
+                                   lower_Left_Y)))  # vertical line
 
         pygame.draw.line(screen, BLACK, (upper_Right_X, upper_Right_Y), (lower_Right_X, lower_Right_Y), margin)
         pygame.draw.line(screen, BLACK, (lower_Left_X, lower_Left_Y), (lower_Right_X, lower_Right_Y), margin)
 
+    def draw(self, screen):
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()))
+        overlay.set_alpha(150)
+        overlay.fill((WHITE))
+        screen.blit(overlay, (0, 0))
+        screen_Grid(screen, 14, 10, _Multiplier)
+
+
+class Game_Map(pygame.sprite.Sprite):
+    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites):
+        pygame.sprite.Sprite.__init__(self)
+        self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites)
+        self.list_Of_Poi = self.poi_Generation(self.trail_Points)
 
     def generate_Map(self, screen, _Multiplier, map_Sprite_Group, terrain_sprites):
         map_Grid = [
@@ -236,11 +253,7 @@ class Game_Map(pygame.sprite.Sprite):
         pass
 
     def draw(self, screen):
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()))
-        overlay.set_alpha(150)
-        overlay.fill((WHITE))
-        screen.blit(overlay, (0, 0))
-        screen_Grid(screen, 14, 10, _Multiplier)
+
         draw_Poi(screen)
         pygame.draw.line(screen, DK_PURPLE, (trail_Points[0][0], trail_Points[0][1]), (start.return_Coords()))
         for i in range(len(trail_Points) - 2):
