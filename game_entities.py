@@ -24,22 +24,22 @@ class Player():
         if self.walkcount == 0 and self.reverse_frames == True:
             self.reverse_frames = False
 
-    def movement(self, screen, get_key):
+    def actions(self, screen, get_key):
 
         if pygame.key.get_pressed()[pygame.K_w]:
             self.cur_pos[1] -= 10
             self.cycle_animation()
             self.player_facing = 0
 
-        if pygame.key.get_pressed()[pygame.K_a]:
-            self.cur_pos[0] -= 10
-            self.cycle_animation()
-            self.player_facing = 1
-
         if pygame.key.get_pressed()[pygame.K_s]:
             self.cur_pos[1] += 10
             self.cycle_animation()
             self.player_facing = 2
+        
+        if pygame.key.get_pressed()[pygame.K_a]:
+            self.cur_pos[0] -= 10
+            self.cycle_animation()
+            self.player_facing = 1
 
         if pygame.key.get_pressed()[pygame.K_d]:
             self.cur_pos[0] += 10

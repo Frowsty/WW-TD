@@ -1,7 +1,7 @@
 import FroPy as fp
 import pygame
 
-import main_menu as menu
+import ui_components as ui
 import game_entities as entities
 
 # Initialize pygame
@@ -43,16 +43,16 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     if start_game == True:
         screen.blit(pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960)), (0,0))
         player.draw(screen)
-        player.movement(screen, kb_input)
+        player.actions(screen, kb_input)
 
     if how_to == True:
-        menu.draw_howto(screen, mouse_x, mouse_y, font)
+        ui.draw_howto(screen, mouse_x, mouse_y, font)
 
     # Main menu
-    menu_input = menu.menu_system(mouse_x, mouse_y)
+    menu_input = ui.menu_system(mouse_x, mouse_y)
     if start_game == False and how_to == False:
-        menu.update_mm()
-        menu.draw_mm(screen, mouse_x, mouse_y)
+        ui.update_mm()
+        ui.draw_mm(screen, mouse_x, mouse_y)
     if menu_input == "QUIT":
         quit()
     if menu_input == "START":
