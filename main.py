@@ -1,9 +1,10 @@
 import FroPy as fp
 import pygame
-from pygame import freetype
+from pygame import font
 import random
 import ui_components as ui
 import game_entities as entities
+from time import sleep
 
 import wang
 import a_star
@@ -16,10 +17,16 @@ if __name__ == 'main':
     pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
-if not pygame.freetype.was_init():
-    pygame.freetype.init()
+pygame.font.init()
 if not pygame.mixer.get_init():
     pygame.mixer.init()
+
+
+#sprite groups
+all_Sprite_Group = pygame.sprite.Group()
+map_Sprite_Group = pygame.sprite.Group()
+terrain_sprites = pygame.sprite.Group()
+
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -48,6 +55,8 @@ SCREEN_WIDTH = 1280 * _Multiplier
 SCREEN_HEIGHT = 1024 * _Multiplier
 BLANK = None
 DEBUG = False
+Map_Shown = False
+
 
 # Set window title
 pygame.display.set_caption("WW - TD")
@@ -62,6 +71,7 @@ how_to = False
 
 # Initialize our player
 player = entities.Player([300, 300])
+map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites)
 
 #ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 #instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -90,6 +100,10 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     if how_to == True:
         ui.draw_howto(screen, mouse_x, mouse_y, font)
 
+    if Map_Shown == True:
+        map_Sprite_Group.draw(screen)
+        terrain_sprites.draw(screen)
+
     # Main menu
     menu_input = ui.menu_system(mouse_x, mouse_y)
     if start_game == False and how_to == False:
@@ -113,6 +127,11 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
             quit()
+    
+    if pygame.key.get_pressed()[pygame.K_F3]:
+            Map_Shown = not Map_Shown
+            sleep(0.10)
+
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
