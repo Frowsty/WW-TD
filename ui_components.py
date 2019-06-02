@@ -14,9 +14,11 @@ MENU_OUTLN = (178, 136, 69)
 story_line = ["You're a lost cowboy in", "the middle of nowhere. ", "Your objective is to", "follow the path to the end ",
               "while completing tasks", "and fighting to survive ", "the journey."]
 
-controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Right", "Space = Shoot"]
+controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Right", "R = Reload", "Space = Shoot"]
 
 menu_bg = pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960))
+
+bullet = pygame.image.load("pictures/bullet.png")
 
 show_story = False
 show_ctrls = False
@@ -29,7 +31,8 @@ menu_quit = fp.Button(RED, 260, 320, 250, 50, "Quit!")
 menu_back = fp.Button(WHITE, 10, 10, 50, 20, "<<<")
 
 # InGame interface
-mute_sound = fp.Checkbox(RED, GREEN, 80, 10, 50, 1, "Sound:", False)
+enable_sound = fp.Checkbox(RED, GREEN, 110, 10, 50, 1, "Mute Sound:", False)
+auto_reload = fp.Checkbox(RED, GREEN, 250, 10, 50, 1, "Auto Reload:", False)
 
 # Howto menu objects
 howto_story_btn = fp.Button(GREEN, 200, 180, 250, 50, "Story")
@@ -131,7 +134,16 @@ def menu_system(mouse_x, mouse_y, did_game_start):
         
         return "MAIN_MENU"
 
-def ingame_interface(screen, mouse_x, mouse_y):
+def draw_ammo(screen, bullets, font):
     
-    mute_sound.draw(screen, mouse_x, mouse_y, 2, text_color=WHITE)
+    ammo_text = font.render(f"{5 - len(bullets)}x", True, BLACK)
+    screen.blit(ammo_text, (45, 920))
+    screen.blit(bullet, (-20, 870))
 
+def ingame_interface(screen, mouse_x, mouse_y, bullets, font):
+    
+    enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+    auto_reload.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+
+    # Draw ammo counter
+    draw_ammo(screen, bullets, font)

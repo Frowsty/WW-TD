@@ -65,6 +65,7 @@ pygame.display.set_caption("WW - TD")
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont("Arial", 20)
+ammo_font = pygame.font.SysFont("Arial", 30)
 
 start_game = False
 how_to = False
@@ -94,9 +95,9 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
 
     if start_game == True:
         screen.blit(pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960)), (0,0))
-        ui.ingame_interface(screen, mouse_x, mouse_y)
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font)
         player.draw(screen)
-        player.actions(screen, kb_input)
+        player.actions(screen, kb_input, ui.auto_reload.get_state())
 
         for bullet in player.bullets:
             bullet.draw(screen)

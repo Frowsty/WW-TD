@@ -111,27 +111,20 @@ class Checkbox:
             pygame.draw.rect(screen, self.a_color, (self.x, self.y, self.size / 2, self.size / 2))
 
             # draw outline
-            pygame.draw.line(screen, (25, 25, 25), [self.x - 2, self.y - 2], [self.x + self.size / 2 + 1, self.y - 2],
-                             2)
+            pygame.draw.line(screen, (25, 25, 25), [self.x - 2, self.y - 2], [self.x + self.size / 2 + 1, self.y - 2], 2)
             pygame.draw.line(screen, (25, 25, 25), [self.x - 2, self.y - 2], [self.x - 2, self.y + self.size / 2], 2)
-            pygame.draw.line(screen, (25, 25, 25), [self.x + self.size / 2, self.y],
-                             [self.x + self.size / 2, self.y + self.size / 2 + 1], 2)
-            pygame.draw.line(screen, (25, 25, 25), [self.x - 2, self.y + self.size / 2],
-                             [self.x + self.size / 2, self.y + self.size / 2], 2)
+            pygame.draw.line(screen, (25, 25, 25), [self.x + self.size / 2, self.y], [self.x + self.size / 2, self.y + self.size / 2 + 1], 2)
+            pygame.draw.line(screen, (25, 25, 25), [self.x - 2, self.y + self.size / 2], [self.x + self.size / 2, self.y + self.size / 2], 2)
 
             if self.state == True:
                 pygame.draw.line(screen, self.b_color, [self.x + (self.size / 2) * 0.2, self.y + (self.size / 2) * 0.5],
-                                 [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95],
-                                 7
-                                 )
-                pygame.draw.line(screen, self.b_color,
-                                 [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95],
-                                 [self.x + (self.size / 2) * 0.8, self.y + (self.size / 2) * 0.1],
-                                 7
-                                 )
+                                                       [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95], 7)
+                                                       
+                pygame.draw.line(screen, self.b_color, [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95],
+                                                       [self.x + (self.size / 2) * 0.8, self.y + (self.size / 2) * 0.1], 7)
 
         if self.text != '':
-            text = scale_text((self.size * 1.3, self.size * 1.3), self.text, text_color)
+            text = scale_text((self.size * 2, self.size * 2), self.text, text_color)
             # text = font.render(self.text, 1, text_color)
             if self.text_pos == 1:
                 screen.blit(text,
