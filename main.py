@@ -26,7 +26,7 @@ if not pygame.mixer.get_init():
 all_Sprite_Group = pygame.sprite.Group()
 map_Sprite_Group = pygame.sprite.Group()
 terrain_sprites = pygame.sprite.Group()
-
+mpi_Group = pygame.sprite.Group()
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -71,7 +71,9 @@ how_to = False
 
 # Initialize our player
 player = entities.Player([300, 300])
-map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites)
+map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
+map_Sprite_Group.add(map)
+
 
 #ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 #instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -101,8 +103,12 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
         ui.draw_howto(screen, mouse_x, mouse_y, font)
 
     if Map_Shown == True:
-        map_Sprite_Group.draw(screen)
         terrain_sprites.draw(screen)
+        for sprite in map_Sprite_Group:
+            sprite.draw(screen)
+        map_Sprite_Group.draw(screen)
+        mpi_Group.draw(screen)
+
 
     # Main menu
     menu_input = ui.menu_system(mouse_x, mouse_y)
@@ -131,7 +137,11 @@ while True:
     if pygame.key.get_pressed()[pygame.K_F3]:
             Map_Shown = not Map_Shown
             sleep(0.10)
-
+    if Map_Shown:
+        if pygame.key.get_pressed()[pygame.K_m]:
+            for sprite in mpi_Group:
+                sprite.toggle_movement()
+        mpi_Group.update()
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
