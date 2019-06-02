@@ -12,6 +12,7 @@ import os
 from os import path
 import map_logic
 
+
 #initializers
 if __name__ == 'main':
     pygame.init()
@@ -27,6 +28,8 @@ all_Sprite_Group = pygame.sprite.Group()
 map_Sprite_Group = pygame.sprite.Group()
 terrain_sprites = pygame.sprite.Group()
 mpi_Group = pygame.sprite.Group()
+player_Sprite_Group = pygame.sprite.Group()
+
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -69,11 +72,6 @@ font = pygame.font.SysFont("Arial", 20)
 start_game = False
 how_to = False
 
-# Initialize our player
-player = entities.Player([300, 300])
-map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
-map_Sprite_Group.add(map)
-
 
 #ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 #instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -84,8 +82,18 @@ def get_image(path):
     image = _image_library.get(path)
     if image == None:
         canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
-        image = pygame.image.load(canonicalized_path)
+        image = pygame.image.load(canonicalized_path).convert()
     return image
+
+
+# Initialize our player
+player = entities.Player([300, 300])
+player_Sprite_Group.add(player)
+all_Sprite_Group.add(player)
+map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
+map_Sprite_Group.add(map)
+
+
 
 def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     global start_game, how_to
@@ -95,8 +103,8 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     # player choose How To screen in main menu
 
     if start_game == True:
-        screen.blit(pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960)), (0,0))
-        player.draw(screen)
+        screen.blit(pygame.transform.scale(get_image("pictures/menu_bg.jpg"), (1280, 960)), (0,0))
+        player_Sprite_Group.draw(screen)
         player.actions(screen, kb_input)
         
     if how_to == True:
@@ -146,6 +154,7 @@ while True:
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
 
+    all_Sprite_Group.update()
     draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input)
     
     pygame.display.update()
