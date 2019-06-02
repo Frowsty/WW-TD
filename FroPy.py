@@ -1,5 +1,5 @@
 import pygame
-from pygame import freetype
+from pygame import font
 from time import sleep
 
 def scale_text(size, text, color, max_size=128, font_name='Arial'):
@@ -7,7 +7,7 @@ def scale_text(size, text, color, max_size=128, font_name='Arial'):
     surface_width, surface_height = size
     lower, upper = 0, max_size
     while True:
-        font = pygame.freetype.SysFont(font_name, max_size)
+        font = pygame.font.SysFont(font_name, max_size)
         font_width = font.size(text)
         font_height = font.size(text)
 

@@ -1,21 +1,11 @@
 import random
 import pygame
-from pygame import freetype
+from pygame import font
 import wang
 import a_star
 import os
 from os import path
 
-
-#initializers
-if __name__ == 'main':
-    pygame.init()
-if not pygame.display.get_init():
-    pygame.display.init()
-if not pygame.freetype.was_init():
-    pygame.freetype.init()
-if not pygame.mixer.get_init():
-    pygame.mixer.init()
 
 #constants
 _Multiplier = 1
@@ -57,14 +47,60 @@ def get_image(path):
     return image
 
 #follow the rabit hole, all classes run their calls to functions in game and main talks to game
+class CL_Terrain(pygame.sprite.Sprite):
+    def __init__(self, x, y, value):
+        pygame.sprite.Sprite.__init__(self)
+        self.location = []
+        self.location.append(x)
+        self.location.append(y)
+        img = []
+        img.append(get_image(self.set_terrain_image(value)))
+        self.image = img[0]
+        self.rect = self.image.get_rect()
+        self.rect.x = (self.location[1] * 82) + 42
+        self.rect.y = (self.location[0] * 82) + 42
+
+    def set_terrain_image(self, value):
+        if value == 0:
+            return './images/sprites/terrain/tile000.png'
+        elif value == 1:
+            return './images/sprites/terrain/tile001.png'
+        elif value == 2:
+            return './images/sprites/terrain/tile002.png'
+        elif value == 3:
+            return './images/sprites/terrain/tile003.png'
+        elif value == 4:
+            return './images/sprites/terrain/tile004.png'
+        elif value == 5:
+            return './images/sprites/terrain/tile005.png'
+        elif value == 6:
+            return './images/sprites/terrain/tile006.png'
+        elif value == 7:
+            return './images/sprites/terrain/tile007.png'
+        elif value == 8:
+            return './images/sprites/terrain/tile008.png'
+        elif value == 9:
+            return './images/sprites/terrain/tile009.png'
+        elif value == 10:
+            return './images/sprites/terrain/tile010.png'
+        elif value == 11:
+            return './images/sprites/terrain/tile011.png'
+        elif value == 12:
+            return './images/sprites/terrain/tile012.png'
+        elif value == 13:
+            return './images/sprites/terrain/tile013.png'
+        elif value == 14:
+            return './images/sprites/terrain/tile014.png'
+        elif value == 15:
+            return './images/sprites/terrain/tile015.png'
 
 
 #part of the map
 
 class Game_Map(pygame.sprite.Sprite):
-    def __init__(self, map_Sprite_Group, _Multiplier, screen):
+    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites):
         pygame.sprite.Sprite.__init__(self)
-        self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group)
+        self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites)
         self.list_Of_Poi = self.poi_Generation(self.trail_Points)
 
 
@@ -96,7 +132,7 @@ class Game_Map(pygame.sprite.Sprite):
         pygame.draw.line(screen, BLACK, (lower_Left_X, lower_Left_Y), (lower_Right_X, lower_Right_Y), margin)
 
 
-    def generate_Map(self, screen, _Multiplier, map_Sprite_Group):
+    def generate_Map(self, screen, _Multiplier, map_Sprite_Group, terrain_sprites):
         map_Grid = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -109,6 +145,16 @@ class Game_Map(pygame.sprite.Sprite):
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
+
+        self.terrain_list = list()
+        self.terrain = wang.wang_set(width = 14, height = 10)
+        for i in range(len(self.terrain)):
+            for j in range(len(self.terrain[0])):
+                x = i
+                y = j
+                value = self.terrain[i][j]
+                self.terrain_list.append(CL_Terrain(x, y, value))
+                terrain_sprites.add(self.terrain_list[-1])
 
         margin = 2
         num_Of_Rows = 10
@@ -177,7 +223,7 @@ class Game_Map(pygame.sprite.Sprite):
             x_coord = self.list_Of_Poi[i][1][0]
             y_coord = self.list_Of_Poi[i][1][1]
             pygame.draw.circle(screen, GREEN, (x_coord, y_coord), 5)
-            font = pygame.freetype.Font(None, 10)
+            font = pygame.font.Font(None, 10)
             dir = self.list_Of_Poi[i][2]
             name_Choice = self.list_Of_Poi[i][0]
             if dir == 'positive':
@@ -202,6 +248,9 @@ class Game_Map(pygame.sprite.Sprite):
                              (trail_Points[i + 1][0], trail_Points[i + 1][1]))
         pygame.draw.line(screen, DK_PURPLE, (trail_Points[-2][0], trail_Points[-2][1]), (end_Point.return_Coords()))
         draw_Poi(list_Of_Poi, screen)
+
+
+
 
 class node(pygame.sprite.Sprite):
     def __init__(self, x, y, img, screen, _Multiplier):

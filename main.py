@@ -1,6 +1,6 @@
 import FroPy as fp
 import pygame
-from pygame import freetype
+from pygame import font
 import random
 import ui_components as ui
 import game_entities as entities
@@ -16,8 +16,7 @@ if __name__ == 'main':
     pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
-if not pygame.freetype.was_init():
-    pygame.freetype.init()
+pygame.font.init()
 if not pygame.mixer.get_init():
     pygame.mixer.init()
 
@@ -25,7 +24,7 @@ if not pygame.mixer.get_init():
 #sprite groups
 all_Sprite_Group = pygame.sprite.Group()
 map_Sprite_Group = pygame.sprite.Group()
-
+terrain_sprites = pygame.sprite.Group()
 
 
 # Define colors
@@ -64,14 +63,14 @@ pygame.display.set_caption("WW - TD")
 # Define Clock
 clock = pygame.time.Clock()
 
-font = pygame.freetype.SysFont("Arial", 20)
+font = pygame.font.SysFont("Arial", 20)
 
 start_game = False
 how_to = False
 
 # Initialize our player
 player = entities.Player([300, 300])
-map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen)
+map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites)
 
 #ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 #instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -102,6 +101,7 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
 
     if Map_Shown == True:
         map_Sprite_Group.draw(screen)
+        terrain_sprites.draw(screen)
 
     # Main menu
     menu_input = ui.menu_system(mouse_x, mouse_y)
