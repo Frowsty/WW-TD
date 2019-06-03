@@ -34,9 +34,8 @@ WHITE = (255, 255, 255)
 _Fullscreen_flag = False
 
 
-
-
-
+#ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
+#instead of wasting memory on a new image. if it hasn't been it loads it.
 _image_library = {}
 
 def get_image(path):
@@ -44,7 +43,7 @@ def get_image(path):
     image = _image_library.get(path)
     if image == None:
         canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
-        image = pygame.image.load(canonicalized_path)
+        image = pygame.image.load(canonicalized_path).convert()
     return image
 
 #follow the rabit hole, all classes run their calls to functions in game and main talks to game
@@ -140,8 +139,17 @@ class Base_grid(pygame.sprite.Sprite):
         overlay.set_alpha(150)
         overlay.fill((WHITE))
         screen.blit(overlay, (0, 0))
-        screen_Grid(screen, 14, 10, _Multiplier)
+        self.screen_Grid(screen, 14, 10, _Multiplier)
 
+class counter(pygame.sprite.Sprite):
+    def __init__(self, screen, pos, start_time):
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []
+        self.load_images()
+
+    def load_images(self):
+        #todo img = get_image('./images/counter/')
+        pass
 
 class map_Player_Icon(pygame.sprite.Sprite):
     def __init__(self, screen, pos, waypoints):
@@ -159,7 +167,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.waypoint_index = 0
         self.target = self.waypoints[self.waypoint_index]
         self.target_radius = 50
-        self.moving = True
+        self.moving = False
 
     def load_images(self):
         img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
@@ -248,7 +256,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.moving = not self.moving
 
 
-class Game_Map(pygame.sprite.Sprite):
+class GameMapController(pygame.sprite.Sprite):
     def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group):
         pygame.sprite.Sprite.__init__(self)
         self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group)

@@ -71,11 +71,6 @@ ammo_font = pygame.font.SysFont("Arial", 30)
 start_game = False
 how_to = False
 
-# Initialize our player
-player = entities.Player([300, 300])
-map = map_logic.Game_Map(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
-map_Sprite_Group.add(map)
-
 #ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 #instead of wasting memory on a new image. if it hasn't been it loads it.
 _image_library = {}
@@ -159,7 +154,7 @@ while True:
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
 
-     all_Sprite_Group.update()
+    all_Sprite_Group.update()
     
     draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input)
     
