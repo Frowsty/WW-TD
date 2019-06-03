@@ -17,13 +17,14 @@ story_line = ["You're a lost cowboy in", "the middle of nowhere. ", "Your object
 
 controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Right", "R = Reload", "Space = Shoot"]
 
-menu_bg = pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960))
+#menu_bg = pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960))
 
 shell = pygame.image.load("pictures/shell.png")
 
 show_story = False
 show_ctrls = False
 show_inventory = False
+show_fps = False
 
 # Initialize Main Menu objects
 menu_box = fp.GroupBox(1280/2 - 150, 960/2 - 300, 300, 500, "Main Menu")
@@ -37,6 +38,7 @@ enable_sound = fp.Checkbox(RED, GREEN, 110, 10, 50, 1, "Mute Sound:", False)
 auto_reload = fp.Checkbox(RED, GREEN, 250, 10, 50, 1, "Auto Reload:", False)
 toggle_inventory = fp.Button(BROWN, 1280 - 213, 960 - 60, 210, 50, "Open Inventory")
 player_inventory = fp.GroupBox(1280, 960 - 370, 200, 300, "Inventory")
+toggle_show_fps = fp.Checkbox(RED, GREEN, 400, 10, 50, 1, "Show FPS:", False)
 
 # Howto menu objects
 howto_story_btn = fp.Button(GREEN, 200, 180, 250, 50, "Story")
@@ -95,7 +97,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
         else:
             howto_ctrls.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
-def draw_mm(screen, mouse_x, mouse_y):
+def draw_mm(screen, mouse_x, mouse_y, menu_bg):
 
     screen.blit(menu_bg, (0,0))
     # Draw main menu components
@@ -104,7 +106,7 @@ def draw_mm(screen, mouse_x, mouse_y):
     menu_howto.draw(screen)
     menu_quit.draw(screen)
 
-def draw_howto(screen, mouse_x, mouse_y, font, did_game_start):
+def draw_howto(screen, mouse_x, mouse_y, font, did_game_start, menu_bg):
     global show_story, show_ctrls
 
     screen.blit(menu_bg, (0,0))
@@ -162,15 +164,22 @@ def inventory(screen, mouse_x, mouse_y):
     if player_inventory.x != 1280:
         player_inventory.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
-def ingame_interface(screen, mouse_x, mouse_y, bullets, font):
+def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock):
     global show_inventory
 
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     auto_reload.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+    toggle_show_fps.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     toggle_inventory.draw(screen)
 
     if toggle_inventory.clicked(mouse_x, mouse_y):
         show_inventory = not show_inventory
+    
+    show_fps = toggle_show_fps.get_state()
+
+    if show_fps == True:
+        fps_text = font.render(f"FPS: {round(clock.get_fps())}", True, GREEN)
+        screen.blit(fps_text, ((1280 - fps_text.get_width()) - 10, 5))
 
     inventory(screen, mouse_x, mouse_y)
 
