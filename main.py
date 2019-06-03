@@ -83,6 +83,14 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path).convert()
     return image
 
+def get_image_convert_alpha(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert_alpha()
+    return image
+
 
 # Initialize our player
 player = entities.Player([300, 300])
@@ -92,6 +100,8 @@ map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain
 map_Sprite_Group.add(map)
 
 menu_bg = pygame.transform.scale(get_image("pictures/menu_bg.jpg"), (1280, 960))
+bullet_img = pygame.transform.scale(get_image_convert_alpha("pictures/bullet.png"), (15, 15))
+shell_img = get_image_convert_alpha("pictures/shell.png")
 
 def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     global start_game, how_to
@@ -102,12 +112,12 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
 
     if start_game == True:
         screen.blit(menu_bg, (0,0))
-        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, clock)
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, clock, shell_img)
         player.draw(screen)
         player.actions(screen, kb_input, ui.auto_reload.get_state())
 
         for bullet in player.bullets:
-            bullet.draw(screen)
+            bullet.draw(screen, bullet_img)
         #todo check bullets for sprite status, add them to their own group, add group to update and draw functions
         
     if how_to == True:

@@ -17,10 +17,6 @@ story_line = ["You're a lost cowboy in", "the middle of nowhere. ", "Your object
 
 controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Right", "R = Reload", "Space = Shoot"]
 
-#menu_bg = pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960))
-
-shell = pygame.image.load("pictures/shell.png")
-
 show_story = False
 show_ctrls = False
 show_inventory = False
@@ -141,11 +137,11 @@ def menu_system(mouse_x, mouse_y, did_game_start):
         
         return "MAIN_MENU"
 
-def draw_ammo(screen, bullets, font):
+def draw_ammo(screen, bullets, font, shell_img):
     
     ammo_text = font.render(f"{5 - len(bullets)}x", True, BLACK)
     screen.blit(ammo_text, (45, 920))
-    screen.blit(shell, (-20, 870))
+    screen.blit(shell_img, (-20, 870))
 
 def inventory(screen, mouse_x, mouse_y):
     global show_inventory
@@ -164,7 +160,7 @@ def inventory(screen, mouse_x, mouse_y):
     if player_inventory.x != 1280:
         player_inventory.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
-def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock):
+def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock, shell_img):
     global show_inventory
 
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
@@ -184,4 +180,4 @@ def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock):
     inventory(screen, mouse_x, mouse_y)
 
     # Draw ammo counter
-    draw_ammo(screen, bullets, font)
+    draw_ammo(screen, bullets, font, shell_img)

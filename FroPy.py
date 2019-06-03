@@ -70,6 +70,7 @@ class Checkbox:
         self.text_pos = text_pos
         self.text = text
         self.state = state
+        self.style = 1
 
     def draw(self, screen, mouse_x, mouse_y, style=1, font='Arial', text_color=(0, 0, 0)):
         """Draw the instance of our checkbox with specified arguments.
@@ -77,6 +78,9 @@ class Checkbox:
            style = 2 will create a check marker style checkbox
            text_pos = 1 will render text on the left side
            text_pos = 2 will render text on the right side"""
+
+        self.style = style
+        
         if style == 1:
             pygame.draw.rect(screen, self.a_color, (self.x, self.y, self.size / 2, self.size / 2))
             pygame.draw.rect(screen, self.b_color, ((self.x + self.size / 2), self.y, self.size / 2, self.size / 2))
@@ -137,11 +141,18 @@ class Checkbox:
             else:
                 raise ValueError
 
-        if mouse_x < self.x + self.size and mouse_x > self.x:
-            if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
-                if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    self.state = not self.state
+        if self.style == 1:
+            if mouse_x < self.x + self.size and mouse_x > self.x:
+                if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
+                    if pygame.mouse.get_pressed()[0] == True:
+                        sleep(0.10)
+                        self.state = not self.state
+        elif self.style == 2:
+            if mouse_x < self.x + self.size / 2 and mouse_x > self.x:
+                if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
+                    if pygame.mouse.get_pressed()[0] == True:
+                        sleep(0.10)
+                        self.state = not self.state
 
     def get_state(self):
         return self.state

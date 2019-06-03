@@ -1,8 +1,17 @@
 import pygame
 import os
 
-player_frames = [pygame.image.load("character_frames/frame1.png"), pygame.image.load("character_frames/frame2.png"),
-                 pygame.image.load("character_frames/frame3.png"), pygame.image.load("character_frames/frame4.png")]
+#ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
+#instead of wasting memory on a new image. if it hasn't been it loads it.
+_image_library = {}
+
+def get_image(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert_alpha()
+    return image
 
 # player_frames = [pygame.transform.scale(pygame.image.load("character_frames/frame_1.png"), (200, 200)),
 #                  pygame.transform.scale(pygame.image.load("character_frames/frame_2.png"), (200, 200)),
@@ -19,7 +28,9 @@ class Player(pygame.sprite.Sprite):
         self.start_pos = start_pos
         self.cur_pos = start_pos
         self.walkcount = 0
-        self.rect = player_frames[self.walkcount]
+        self.player_frames = []
+        self.frames = self.load_frames()
+        self.rect = self.player_frames[self.walkcount]
         self.reverse_frames = False
         self.player_facing = 0
         self.velocity = 40
@@ -27,6 +38,12 @@ class Player(pygame.sprite.Sprite):
         self.ammo = 5
         self.fired_tick = pygame.time.get_ticks()
         self.reloading = False
+
+    def load_frames(self):
+        self.player_frames.append(get_image("character_frames/frame1.png"))
+        self.player_frames.append(get_image("character_frames/frame2.png"))
+        self.player_frames.append(get_image("character_frames/frame3.png"))
+        self.player_frames.append(get_image("character_frames/frame4.png"))
 
     def cycle_animation(self):
 
@@ -39,6 +56,16 @@ class Player(pygame.sprite.Sprite):
             self.reverse_frames = True
         if self.walkcount == 0 and self.reverse_frames == True:
             self.reverse_frames = False
+
+    def clamp_movement(self):
+        if self.cur_pos[0] >= 1280 - self.rect.get_width():
+            self.cur_pos[0] = 1280 - self.rect.get_width()
+        if self.cur_pos[0] <= 0:
+            self.cur_pos[0] = 0
+        if self.cur_pos[1] >= 960 - self.rect.get_height():
+            self.cur_pos[1] = 960 - self.rect.get_height()
+        if self.cur_pos[1] <= 0:
+            self.cur_pos[1] = 0
 
     def actions(self, screen, get_key, auto_reload):
 
@@ -61,6 +88,8 @@ class Player(pygame.sprite.Sprite):
             self.cur_pos[0] += self.velocity
             self.cycle_animation()
             self.player_facing = 3
+        
+        self.clamp_movement()
 
         for bullet in self.bullets:
             if bullet.direction == 1 or bullet.direction == 3:
@@ -105,13 +134,13 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
 
         if self.player_facing == 0:
-            screen.blit(player_frames[self.walkcount], self.cur_pos)
+            screen.blit(self.player_frames[self.walkcount], self.cur_pos)
         if self.player_facing == 1:
-            screen.blit(pygame.transform.rotate(player_frames[self.walkcount], 90), self.cur_pos)
+            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.cur_pos)
         if self.player_facing == 2:
-            screen.blit(pygame.transform.rotate(player_frames[self.walkcount], 180), self.cur_pos)
+            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.cur_pos)
         if self.player_facing == 3:
-            screen.blit(pygame.transform.rotate(player_frames[self.walkcount], -90), self.cur_pos)
+            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.cur_pos)
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -119,11 +148,12 @@ class Projectile(pygame.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
-        self.bullet = bullet
+        self.bullet = ""
         self.direction = direction
         self.velocity = 45
 
-    def draw(self,screen):
+    def draw(self,screen, bullet_img):
+        self.bullet = bullet_img
         if self.direction == 0:
             self.velocity = -45
             if self.y < 960 and self.y > 0:
