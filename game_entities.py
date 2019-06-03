@@ -18,7 +18,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, start_pos=[0,0]):
         pygame.sprite.Sprite.__init__(self)
-        self.start_pos = start_pos
+
         self.cur_pos = start_pos
         self.images = []
         self.load_images()

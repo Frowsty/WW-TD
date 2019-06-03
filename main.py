@@ -11,7 +11,7 @@ import a_star
 import os
 from os import path
 import map_logic
-
+import random_encounter
 
 #initializers
 if __name__ == 'main':
@@ -93,6 +93,12 @@ all_Sprite_Group.add(player)
 map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
 map_Sprite_Group.add(map)
 
+#random encounters
+
+
+
+def create_random(screen, start_game, how_to, Map_Shown):
+    re1 = random_encounter.random_Encounter(screen, start_game, how_to, Map_Shown)
 
 
 def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
@@ -135,21 +141,20 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
 
 while True:
 
-    # set max ticks per second (FPS)
-    clock.tick(60)
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
             quit()
     
-    if pygame.key.get_pressed()[pygame.K_F3]:
-            Map_Shown = not Map_Shown
-            sleep(0.10)
-    if Map_Shown:
-        if pygame.key.get_pressed()[pygame.K_m]:
-            for sprite in mpi_Group:
-                sprite.toggle_movement()
-        mpi_Group.update()
+        if pygame.key.get_pressed()[pygame.K_F3]:
+                Map_Shown = not Map_Shown
+                sleep(0.10)
+        if Map_Shown:
+            if pygame.key.get_pressed()[pygame.K_m]:
+                for sprite in mpi_Group:
+                    sprite.toggle_movement()
+            mpi_Group.update()
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
@@ -158,3 +163,5 @@ while True:
     draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input)
     
     pygame.display.update()
+    # set max ticks per second (FPS)
+    clock.tick(60)

@@ -1,0 +1,113 @@
+TODO list
+
+TODO - Distance from key waypoint(chosen randomly from list of trail points) / distance from previous key waypoint or last encounter = a percentage.  Subject this from 100% gives the percentage chance of an encounter. This math is checked every 5% total moved.
+TODO - Encounters trigger and then you fight/ walk around whatever.  Then exit to the map and continue traveling.
+TODO - When you reach the big E game over.
+TODO - Encounter maps will be randomly populated.
+TODO - We should implement health level,  death ends game.
+TODO -Would love to implement inventory system and supply needs but don't want to put the cart before the horse
+TODO - Later i can give the opportunity for the player to change destination to a nearby poi, then back to trail.
+
+'''
+TODO finish rivers -.... come back to this later
+
+
+class random_rivers(pygame.sprite.Sprite):
+    def __init__(self, num_Of_Rivers):
+        pygame.sprite.Sprite.__init__(self)
+        #rivers will always flow east to west and north to south
+        #todo the random number outside where the rivers are called for creation
+        num_Of_Rivers = random.randint(2,4)
+
+        #create starting point
+        #measure distance from starting point to bottom of the map
+        #count number of cells(//80) and that will be the number of main legs
+        #number of main legs is created
+        #spring to 1st to 2nd to 3rd so on
+        #each leg has a 1 in 2 chance of spawning a child leg, each child leg might spawn one, each time the chance drops 50%
+
+        self.starting_pos = (random.randint(40, 858), random.randint(40, 600)) #40 starts the left side of the map and 858 is right side
+        self.distance_from_edge = 1200 - starting_pos[0][1]
+        self.num_of_legs = self.distance_from_edge//80
+        print(self.num_of_legs)
+        self.leg_array = []
+        self.children_array = []
+        children_multiplier = 2
+        for i in range(self.num_of_legs):
+            chance = random.randint(0,100)
+            if chance < (100//children_multiplier):
+                self.children_array.append(child class)
+                children_multiplier *= 2
+
+
+
+    def create_child(self):
+'''
+
+'''
+#todo impliment later
+class counter(pygame.sprite.Sprite):
+    def __init__(self, screen, start_time = '00:00'):
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []
+        self.load_images()
+        self.surface = pygame.Surface((400,80))
+        self.image = self.surface
+        self.rect = self.image.get_rect()
+        self.rect.x = 20
+        self.rect.y = screen.get_height() - 100
+        self.image_order = []
+        self.set_image_order(start_time)
+
+
+    def set_image_order(self, text):
+        letter_dict = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8':8, '9':9, ':': 10}
+        self.image_positions = [(0, 0), (80, 0), (160, 0), (240, 0), (320, 0)]
+        chars = [char for char in text]
+        for i in range(len(chars)):
+            self.surface.blit(self.images[letter_dict.get(chars[i])], self.image_positions[i]))
+
+    def load_images(self):
+        img = get_image('./images/ui/numbers/atari_font/0.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/1.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/2.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/3.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/4.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/5.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/6.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/7.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/8.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/9.png')
+        self.images.append(img)
+        img = get_image('./images/ui/numbers/atari_font/colon.png')
+        self.images.append(img)
+
+    def draw(self):
+        pass
+
+
+
+global numbers
+numbers = {}
+for num in range(10):
+    img = pygame.image.load('data/numbers/' + str(num) + '.png').convert()
+    numbers[str(num)] = img.copy()
+
+def draw_number(number,x,y,surface):
+    global numbers
+    x_offset = 0
+    for char in number:
+        surface.blit(numbers[char],(x+x_offset,y))
+        x_offset += 23
+
+        fluffy's code
+'''
