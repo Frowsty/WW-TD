@@ -55,7 +55,9 @@ class CL_Terrain(pygame.sprite.Sprite):
         self.location.append(x)
         self.location.append(y)
         img = []
-        img.append(get_image(self.set_terrain_image(value)))
+        image_stuff =get_image(self.set_terrain_image(value))
+        image_stuff = pygame.transform.scale(image_stuff, (80,80))
+        img.append(image_stuff)
         self.image = img[0]
         self.rect = self.image.get_rect()
         self.rect.x = (self.location[1] * 82) + 42
@@ -147,13 +149,13 @@ class Base_grid(pygame.sprite.Sprite):
 #todo create conditions to triggur random encounters
 
 class map_Player_Icon(pygame.sprite.Sprite):
-    def __init__(self, screen, pos, waypoints):
+    def __init__(self, screen, pos, waypoints, map):
         pygame.sprite.Sprite.__init__(self)
         self.images = []
         self.load_images()
         self.image = self.images[0]
         self.img_counter = 0
-        self.speed = 1
+        self.speed = 10
         self.vel = Vector2(0,0)
         self.rect = self.image.get_rect(center=pos)
         self.max_speed = 10
@@ -167,6 +169,8 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.finish_distance = 0
         self.random_encounter_clock = 0
         self.time_since_last_check = pygame.time.get_ticks()
+        self.pop_list = []
+        self.find_total_distance()
 
     def load_images(self):
         img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
@@ -218,7 +222,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
 
-    def update(self):
+    def update(self, screen):
         if self.moving == True:
             #vector pointing to the target
             heading = self.target - self.pos
@@ -226,10 +230,11 @@ class map_Player_Icon(pygame.sprite.Sprite):
             self.distance = heading.length()
 
             heading.normalize_ip()
-            if self.distance <= 4:
-                #get closer than 4 pixels (so basically right on it
+            if self.distance <= 2:
+                #get closer than 2 pixels (so basically right on it
                 self.waypoint_index = (self.waypoint_index + 1) % len(self.waypoints)
                 self.target = self.waypoints[self.waypoint_index]
+                self.distance_pop()
             if self.distance <= self.target_radius:
                 #if we're approaching, then slow down
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
@@ -240,10 +245,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
             self.pos += self.vel
             self.rect.center = self.pos
-            if (pygame.time.get_ticks() - self.time_since_last_check) > 2000:
-                self.calculate_distance()
-            else:
-                pass
+
         else:
             # vector pointing to the target
             heading = self.target - self.pos
@@ -251,36 +253,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
             self.distance = heading.length()
             self.pos = self.pos
 
-
-
-    def calculate_distance(self):
-        print(self.find_total_distance())
-        print(self.distance)
-        self.time_since_last_check = pygame.time.get_ticks()
-
-
-
-    def find_total_distance(self):
-        self.finish_distance = 0
-        for i in range(len(self.waypoints)):
-            if i < self.waypoint_index:
-                pass
-            elif i >= self.waypoint_index:
-                a = self.waypoints[i]
-                if i == 0:
-                    b = self.pos
-                else:
-                    b = self.waypoints[i-1]
-                temp = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
-                temp = round(temp)
-
-                self.finish_distance += temp
-            if i == len(self.waypoints):
-                self.finish_distance += distance
-        return self.finish_distance
-
-
-    def draw(self):
+    def draw(self, screen):
         if self.moving == True:
             self.img_counter += 1
             if self.img_counter > len(self.images):
@@ -289,6 +262,8 @@ class map_Player_Icon(pygame.sprite.Sprite):
         else:
             self.image = self.images[0]
             self.img_counter = 0
+
+        self.calculate_distance(screen)
 
     def toggle_movement(self):
         self.moving = not self.moving
@@ -302,6 +277,40 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
     def distance_till_end(self):
         return self.finish_distance
+
+    def find_total_distance(self):
+        self.finish_distance = 0
+
+        for i in range(len(self.waypoints)):
+            # find the distance between i and i+1 and sum that until i+1 ==len of trailnodes
+            if (i + 1) < (len(self.waypoints)):
+                a = (self.waypoints[i][0], self.waypoints[i][1])
+                b = (self.waypoints[i + 1][0], self.waypoints[i + 1][1])
+                temp = math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+                temp = round(temp)
+                self.pop_list.append(temp)
+                self.finish_distance += temp
+        print(self.finish_distance)
+        self.pop_list.reverse()
+        # finish distance from start to finish is fixed per round
+        # distance to can be subtracted from based on distance to next waypoint
+
+    def distance_pop(self):
+        self.finish_distance -= self.pop_list.pop()
+        print(self.finish_distance)
+
+    #todo get this text output working
+    def calculate_distance(self, screen):
+        largeText = pygame.font.Font('./images/font/ac-reg.ttf', 20)
+        text = 'Distance to next waypoint: ' + str(self.distance) + '. Distance to final destination: ' + str(
+            self.finish_distance)
+        TextSurf, TextRect = self.text_objects(text, largeText)
+        screen.blit(TextSurf, (0,0))
+
+    def text_objects(self, text, font):
+        textSurface = font.render(text, True, (0, 0, 0))
+        return textSurface, textSurface.get_rect()
+
 
 
 class GameMapController(pygame.sprite.Sprite):
@@ -363,9 +372,8 @@ class GameMapController(pygame.sprite.Sprite):
         self.end_Point = node(50, self.trail_Nodes[-1][1], './images/placeholder/end.png', screen, _Multiplier)
         map_Sprite_Group.add(self.end_Point)
 
-        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes)
+        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, map=self)
         mpi_Group.add(self.player_icon)
-
         return self.trail_Nodes, self.end_Point, self.start
 
 
@@ -422,10 +430,6 @@ class GameMapController(pygame.sprite.Sprite):
                 f = font.render(name_Choice, True, BLACK)
                 f = pygame.transform.rotate(f, -90)
                 screen.blit(f, (x_coord, y_coord + 30))
-
-
-
-
 
     def update(self):
         pass
