@@ -1,10 +1,16 @@
 import pygame
 import os
 
-player_frames = [pygame.image.load("character_frames/frame_1.gif"), pygame.image.load("character_frames/frame_2.gif"),
-                 pygame.image.load("character_frames/frame_3.gif"), pygame.image.load("character_frames/frame_4.gif")]
+player_frames = [pygame.image.load("character_frames/frame1.png"), pygame.image.load("character_frames/frame2.png"),
+                 pygame.image.load("character_frames/frame3.png"), pygame.image.load("character_frames/frame4.png")]
 
-bullet = pygame.transform.scale(pygame.image.load("pictures/bullet.png"), (50, 50))
+# player_frames = [pygame.transform.scale(pygame.image.load("character_frames/frame_1.png"), (200, 200)),
+#                  pygame.transform.scale(pygame.image.load("character_frames/frame_2.png"), (200, 200)),
+#                  pygame.transform.scale(pygame.image.load("character_frames/frame_3.png"), (200, 200)),
+#                  pygame.transform.scale(pygame.image.load("character_frames/frame_4.png"), (200, 200))]
+
+bullet = pygame.transform.scale(pygame.image.load("pictures/bullet.png"), (15, 15))
+#shell = pygame.transform.scale(pygame.image.load("pictures/shell.png"), (50, 50))
 
 class Player(pygame.sprite.Sprite):
 
@@ -16,7 +22,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = player_frames[self.walkcount]
         self.reverse_frames = False
         self.player_facing = 0
-        self.velocity = 20
+        self.velocity = 40
         self.bullets = []
         self.ammo = 5
         self.fired_tick = pygame.time.get_ticks()
@@ -68,24 +74,33 @@ class Player(pygame.sprite.Sprite):
 
         if pygame.key.get_pressed()[pygame.K_r] or self.reloading == True or (auto_reload == True and len(self.bullets) == 5):
             self.reloading = True
-            for bullet in self.bullets:
-                self.bullets.pop(self.bullets.index(bullet))
+            
+            if auto_reload == True:
+                if self.bullets[-1].x >= 1280 or self.bullets[-1].x <= 0 or self.bullets[-1].y >= 960 or self.bullets[-1].y <= 0:
+                    for bullet in self.bullets:
+                        self.bullets.pop(self.bullets.index(bullet))
 
-            if len(self.bullets) == 0:
-                self.reloading = False
+                    if len(self.bullets) == 0:
+                        self.reloading = False
+            else:
+                for bullet in self.bullets:
+                    self.bullets.pop(self.bullets.index(bullet))
+
+                if len(self.bullets) == 0:
+                    self.reloading = False
 
         if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
             self.fired_tick = pygame.time.get_ticks()
             if len(self.bullets) < self.ammo:
 
                 if self.player_facing == 0:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 1.8), round(self.cur_pos[1]), self.player_facing))
+                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 1.6), round(self.cur_pos[1] + self.rect.get_height() / 8), self.player_facing))
                 if self.player_facing == 1:
-                    self.bullets.append(Projectile(round(self.cur_pos[0]), round(self.cur_pos[1] + self.rect.get_height() / 4), self.player_facing))
+                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 8), round(self.cur_pos[1] + self.rect.get_height() / 3.2), self.player_facing))
                 if self.player_facing == 2:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 4), round(self.cur_pos[1] + self.rect.get_height() / 1.25), self.player_facing))
+                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 3.3), round(self.cur_pos[1] + self.rect.get_height() / 1.22), self.player_facing))
                 if self.player_facing == 3:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 1.25), round(self.cur_pos[1] + self.rect.get_height() / 1.8), self.player_facing))
+                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 1.22), round(self.cur_pos[1] + self.rect.get_height() / 1.6), self.player_facing))
     
     def draw(self, screen):
 

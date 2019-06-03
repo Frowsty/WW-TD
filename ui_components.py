@@ -8,6 +8,7 @@ WHITE = (255, 255, 255)
 BLUE = (0, 0, 150)
 GREEN = (0, 150, 0)
 RED = (150, 0, 0)
+BROWN = (204, 153, 0)
 MENU_MAIN = (232, 190, 122)
 MENU_OUTLN = (178, 136, 69)
 
@@ -18,10 +19,11 @@ controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Righ
 
 menu_bg = pygame.transform.scale(pygame.image.load("pictures/menu_bg.jpg"), (1280, 960))
 
-bullet = pygame.image.load("pictures/bullet.png")
+shell = pygame.image.load("pictures/shell.png")
 
 show_story = False
 show_ctrls = False
+show_inventory = False
 
 # Initialize Main Menu objects
 menu_box = fp.GroupBox(1280/2 - 150, 960/2 - 300, 300, 500, "Main Menu")
@@ -33,6 +35,8 @@ menu_back = fp.Button(WHITE, 10, 10, 50, 20, "<<<")
 # InGame interface
 enable_sound = fp.Checkbox(RED, GREEN, 110, 10, 50, 1, "Mute Sound:", False)
 auto_reload = fp.Checkbox(RED, GREEN, 250, 10, 50, 1, "Auto Reload:", False)
+toggle_inventory = fp.Button(BROWN, 1280 - 213, 960 - 60, 210, 50, "Open Inventory")
+player_inventory = fp.GroupBox(1280, 960 - 370, 200, 300, "Inventory")
 
 # Howto menu objects
 howto_story_btn = fp.Button(GREEN, 200, 180, 250, 50, "Story")
@@ -101,8 +105,8 @@ def draw_mm(screen, mouse_x, mouse_y):
     menu_quit.draw(screen)
 
 def draw_howto(screen, mouse_x, mouse_y, font, did_game_start):
-
     global show_story, show_ctrls
+
     screen.blit(menu_bg, (0,0))
 
     menu_back.draw(screen)
@@ -120,6 +124,7 @@ def draw_howto(screen, mouse_x, mouse_y, font, did_game_start):
 
 def menu_system(mouse_x, mouse_y, did_game_start):
     global show_ctrls, show_story
+
     if menu_quit.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         return "QUIT"
     if menu_start.clicked(mouse_x, mouse_y) == True and did_game_start == False:
@@ -138,12 +143,36 @@ def draw_ammo(screen, bullets, font):
     
     ammo_text = font.render(f"{5 - len(bullets)}x", True, BLACK)
     screen.blit(ammo_text, (45, 920))
-    screen.blit(bullet, (-20, 870))
+    screen.blit(shell, (-20, 870))
+
+def inventory(screen, mouse_x, mouse_y):
+    global show_inventory
+
+    if show_inventory == True:
+        toggle_inventory.text = "Close Inventory"
+        player_inventory.x -= 33
+        if player_inventory.x <= (1280 - 210):
+            player_inventory.x = (1280 - 210)
+    else:
+        toggle_inventory.text = "Open Inventory"
+        player_inventory.x += 33
+        if player_inventory.x >= 1280:
+            player_inventory.x = 1280
+    
+    if player_inventory.x != 1280:
+        player_inventory.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
 def ingame_interface(screen, mouse_x, mouse_y, bullets, font):
-    
+    global show_inventory
+
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     auto_reload.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+    toggle_inventory.draw(screen)
+
+    if toggle_inventory.clicked(mouse_x, mouse_y):
+        show_inventory = not show_inventory
+
+    inventory(screen, mouse_x, mouse_y)
 
     # Draw ammo counter
     draw_ammo(screen, bullets, font)
