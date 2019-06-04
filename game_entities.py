@@ -1,5 +1,6 @@
 import pygame
 import os
+import math
 from time import sleep
 
 # Define colors
@@ -141,16 +142,22 @@ class Player(pygame.sprite.Sprite):
                 if self.player_facing == 3:
                     self.bullets.append(Projectile(round(self.cur_pos[0] + self.rect.get_width() / 1.22), round(self.cur_pos[1] + self.rect.get_height() / 1.6), self.player_facing))
     
-    def draw(self, screen, font):
+    def draw(self, screen, font, mouse_x, mouse_y):
 
-        if self.player_facing == 0:
-            screen.blit(self.player_frames[self.walkcount], self.cur_pos)
-        if self.player_facing == 1:
-            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.cur_pos)
-        if self.player_facing == 2:
-            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.cur_pos)
-        if self.player_facing == 3:
-            screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.cur_pos)
+        # if self.player_facing == 0:
+        #     screen.blit(self.player_frames[self.walkcount], self.cur_pos)
+        # if self.player_facing == 1:
+        #     screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.cur_pos)
+        # if self.player_facing == 2:
+        #     screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.cur_pos)
+        # if self.player_facing == 3:
+        #     screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.cur_pos)
+
+        cur_pos_vec = pygame.math.Vector2(self.cur_pos[0], self.cur_pos[1])
+        direction = (mouse_x, mouse_y) - cur_pos_vec
+        angle = direction.as_polar()[1]
+
+        screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], int(-angle)), self.cur_pos)
 
         health_text = font.render(f"HEALTH: {self.health}", True, GREEN)
         screen.blit(health_text, (round((1280 / 2) - (health_text.get_width() / 2)), 5))

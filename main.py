@@ -115,7 +115,7 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     if start_game == True:
         screen.blit(menu_bg, (0,0))
         ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, clock, shell_img)
-        player.draw(screen, ammo_font)
+        player.draw(screen, ammo_font, mouse_x, mouse_y)
         player.actions(ui.auto_reload.get_state())
         enemy.draw(screen)
 
