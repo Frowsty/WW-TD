@@ -99,23 +99,23 @@ class Player(pygame.sprite.Sprite):
     def actions(self):
 
         if pygame.key.get_pressed()[pygame.K_w]:
-            self.cur_pos[1] -= self.velocity
+            self.rect.y -= self.velocity
             self.player_facing = 0
 
         if pygame.key.get_pressed()[pygame.K_s]:
-            self.cur_pos[1] += self.velocity
+            self.rect.y += self.velocity
             self.player_facing = 2
 
         if pygame.key.get_pressed()[pygame.K_a]:
-            self.cur_pos[0] -= self.velocity
+            self.rect.x -= self.velocity
             self.player_facing = 1
 
         if pygame.key.get_pressed()[pygame.K_d]:
-            self.cur_pos[0] += self.velocity
+            self.rect.x += self.velocity
             self.player_facing = 3
 
         # self.cycle_animation()
-        self.clamp_movement()
+        #self.clamp_movement()
 
         for bullet in self.bullets:
             if bullet.direction == 1 or bullet.direction == 3:
@@ -149,18 +149,18 @@ class Player(pygame.sprite.Sprite):
             if len(self.bullets) < self.ammo:
 
                 if self.player_facing == 0:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.player_frames[0].get_width() / 2),
-                                                   round(self.cur_pos[1] - 10), self.player_facing))
+                    self.bullets.append(Projectile(round(self.rect[0] + self.player_frames[0].get_width() / 2),
+                                                   round(self.rect[1] - 10), self.player_facing))
                 if self.player_facing == 1:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] - 10),
-                                                   round(self.cur_pos[1] + 8), self.player_facing))
+                    self.bullets.append(Projectile(round(self.rect[0] - 10),
+                                                   round(self.rect[1] + 8), self.player_facing))
                 if self.player_facing == 2:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + 8),
-                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() + 11),
+                    self.bullets.append(Projectile(round(self.rect[0] + 8),
+                                                   round(self.rect[1] + self.player_frames[0].get_height() + 11),
                                                    self.player_facing))
                 if self.player_facing == 3:
-                    self.bullets.append(Projectile(round(self.cur_pos[0] + self.player_frames[0].get_width()),
-                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() / 1.6),
+                    self.bullets.append(Projectile(round(self.rect[0] + self.player_frames[0].get_width()),
+                                                   round(self.rect[1] + self.player_frames[0].get_height() / 1.6),
                                                    self.player_facing))
 
     def draw(self, screen):
@@ -170,13 +170,13 @@ class Player(pygame.sprite.Sprite):
 
         if self.health > 0:
             if self.player_facing == 0:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.rect)
             if self.player_facing == 1:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.rect)
             if self.player_facing == 2:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.rect)
             if self.player_facing == 3:
-                screen.blit(self.player_frames[self.walkcount], self.cur_pos)
+                screen.blit(self.player_frames[self.walkcount], self.rect)
         else:
             self.dead = True
 
@@ -200,6 +200,8 @@ class Enemy(pygame.sprite.Sprite):
         self.bullets = []
         self.walkcount = 0
         self.player_frame = get_image("character_frames/enemy_knife.png")
+        self.image = self.player_frame
+        self.rect = self.image.get_rect()
         # self.frames = self.load_frames()
         self.health = 100
         self.speed = 20
@@ -217,18 +219,18 @@ class Enemy(pygame.sprite.Sprite):
     # def actions(self, player_pos):
 
     def clamp_movement(self):
-        if self.cur_pos[0] >= 1280 - self.player_frame.get_width() - 50:
-            self.cur_pos[0] = 1280 - self.player_frame.get_width() - 50
-        if self.cur_pos[0] <= 50:
-            self.cur_pos[0] = 50
-        if self.cur_pos[1] >= 960 - self.player_frame.get_height() - 50:
-            self.cur_pos[1] = 960 - self.player_frame.get_height() - 50
-        if self.cur_pos[1] <= 50:
-            self.cur_pos[1] = 50
+        if self.rect[0] >= 1280 - self.player_frame.get_width() - 50:
+            self.rect[0] = 1280 - self.player_frame.get_width() - 50
+        if self.rect[0] <= 50:
+            self.rect[0] = 50
+        if self.rect[1] >= 960 - self.player_frame.get_height() - 50:
+            self.rect[1] = 960 - self.player_frame.get_height() - 50
+        if self.rect[1] <= 50:
+            self.rect[1] = 50
 
     def collision_check(self, player_pos, player_frame):
-        if self.cur_pos[0] >= player_pos[0] and self.cur_pos[0] <= player_pos[0] + player_frame.get_width():
-            if self.cur_pos[1] >= player_pos[1] and self.cur_pos[1] <= player_pos[1] + player_frame.get_height() and (
+        if self.rect[0] >= player_pos[0] and self.rect[0] <= player_pos[0] + player_frame.get_width():
+            if self.rect[1] >= player_pos[1] and self.rect[1] <= player_pos[1] + player_frame.get_height() and (
                     pygame.time.get_ticks() - self.hit_target_tick) >= 500:
                 self.hit_target_tick = pygame.time.get_ticks()
                 self.hit_player = True
@@ -238,16 +240,16 @@ class Enemy(pygame.sprite.Sprite):
             self.health = 0
 
         if self.health > 0:
-            self.direction = (pygame.math.Vector2(player_pos) - pygame.math.Vector2(self.cur_pos)).angle_to(
+            self.direction = (pygame.math.Vector2(player_pos) - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
                 pygame.math.Vector2(1, 0))
-            screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.cur_pos)
-            self.player_frame.get_rect().center = pygame.math.Vector2(self.cur_pos)
+            screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
+            self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
             if is_player_dead == False:
                 self.accelerate = pygame.math.Vector2(self.speed, 0).rotate(-self.direction)
             else:
                 self.accelerate = pygame.math.Vector2(0, 0)
-            self.cur_pos += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
-            self.player_frame.get_rect().center = pygame.math.Vector2(self.cur_pos)
+            #self.rect += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
+            self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
 
             self.collision_check(player_pos, player_frame)
             self.clamp_movement()

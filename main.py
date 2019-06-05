@@ -184,6 +184,7 @@ while True:
 
         if pygame.key.get_pressed()[pygame.K_F3]:
             Map_Shown = not Map_Shown
+
             player.bullets.clear()
             enemies.clear()
             sleep(0.10)

@@ -19,17 +19,19 @@ def get_image(path):
 
 class random_Encounter():
     def __init__(self, screen, player_group):
+
         self.looping = True
-        self.player_Sprite_Group = player_group
-        for sprite in self.player_Sprite_Group:
+
+        for sprite in player_group:
             self.player = sprite
-        self.loop(screen)
+        self.loop(screen, player_group)
 
 
 
 
 
-    def loop(self,screen):
+
+    def loop(self,screen, player_group):
         while self.looping:
             pygame.event.get()
             screen.fill((0,0,0))
@@ -49,7 +51,7 @@ class random_Encounter():
         self.select_map()
 
         self.encounter = True
-        self.camera = camera.Camera(3000,3000)
+        self.camera = camera.Camera(1000,1000)
 
         while self.encounter:
             pygame.event.pump()
@@ -58,15 +60,16 @@ class random_Encounter():
 
             self.camera.update(self.player)
 
-            self.draw(screen)  #draws the map
+            self.draw(screen, player_group)  #draws the map
 
             self.player.draw(screen)
 
             pygame.display.flip()
+            pygame.time.Clock().tick(60)
 
 
     def select_map(self):
-        self.load_map('./tilesets/random1.tmx')
+        self.load_map('./tilesets/temptown.tmx')
 
     def load_map(self, filename):
         #needs random file selection per level, one level hard coded for testing
@@ -83,11 +86,14 @@ class random_Encounter():
         #only triggures on encounters with people or animals
         pass
 
-    def draw(self, screen):
+    def draw(self, screen, player_group):
         #todo add camera class, then add $, self.camera.apply_rect(self.map_rect)$ to the variable below
         screen.blit(self.map_img, (0,0))
-        for sprite in self.player_Sprite_Group:
+
+
+        for sprite in player_group:
             screen.blit(sprite.image, self.camera.apply(sprite))
+
 
 
 
