@@ -148,7 +148,7 @@ class Base_grid(pygame.sprite.Sprite):
 
 
 class map_Player_Icon(pygame.sprite.Sprite):
-    def __init__(self, screen, pos, waypoints, map):
+    def __init__(self, screen, pos, waypoints, map, player_Group):
         pygame.sprite.Sprite.__init__(self)
         self.images = []
         self.load_images()
@@ -164,6 +164,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.target = self.waypoints[self.waypoint_index]
         self.target_radius = 50
         self.moving = False
+        self.player_Group= player_Group
         self.distance = 0
         self.finish_distance = 0
         self.random_encounter_clock = 0
@@ -223,6 +224,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.images.append(img)
 
     def update(self, screen):
+
         if self.moving == True:
             #vector pointing to the target
             heading = self.target - self.pos
@@ -240,7 +242,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
                 #if we're approaching, then slow down
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
                 if self.random_encounter(self.distance_since_encounter, self.distance):
-                    random_encounter.random_Encounter(screen)
+                    random_encounter.random_Encounter(screen, self.player_Group)
             else:
                 self.vel = heading * self.max_speed
             if self.waypoint_index >= len(self.waypoints):
@@ -329,7 +331,8 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
 
 class GameMapController(pygame.sprite.Sprite):
-    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group):
+    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group):
+        self.player_Group = player_Sprite_Group
         pygame.sprite.Sprite.__init__(self)
         self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group)
         self.list_Of_Poi = self.poi_Generation(self.trail_Points)
@@ -337,6 +340,7 @@ class GameMapController(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = -200
         self.rect.y = 200
+
 
     def generate_Map(self, screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group):
         map_Grid = [
@@ -363,7 +367,7 @@ class GameMapController(pygame.sprite.Sprite):
                 terrain_sprites.add(self.terrain_list[-1])
 
 
-        margin = 2
+        margin = 0
         num_Of_Rows = 10
         num_Of_Col = 14
 
@@ -387,7 +391,7 @@ class GameMapController(pygame.sprite.Sprite):
         self.end_Point = node(50, self.trail_Nodes[-1][1], './images/placeholder/end.png', screen, _Multiplier)
         map_Sprite_Group.add(self.end_Point)
 
-        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, map=self)
+        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, self, self.player_Group)
         mpi_Group.add(self.player_icon)
         return self.trail_Nodes, self.end_Point, self.start
 

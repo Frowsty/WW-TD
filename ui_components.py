@@ -166,13 +166,15 @@ def inventory(screen, mouse_x, mouse_y):
         player_inventory.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
 
-def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock, shell_img):
+def ingame_interface(screen, mouse_x, mouse_y, bullets, fps_font, font, clock, shell_img):
     global show_inventory
 
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     auto_reload.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     toggle_show_fps.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     toggle_inventory.draw(screen)
+    fullscreen_text = font.render(f"Fullscreen: F12", True, BLACK)
+    screen.blit(fullscreen_text, (450, 10))
 
     if toggle_inventory.clicked(mouse_x, mouse_y):
         show_inventory = not show_inventory
@@ -180,10 +182,10 @@ def ingame_interface(screen, mouse_x, mouse_y, bullets, font, clock, shell_img):
     show_fps = toggle_show_fps.get_state()
 
     if show_fps == True:
-        fps_text = font.render(f"FPS: {round(clock.get_fps())}", True, GREEN)
+        fps_text = fps_font.render(f"FPS: {round(clock.get_fps())}", True, GREEN)
         screen.blit(fps_text, ((1280 - fps_text.get_width()) - 10, 5))
 
     inventory(screen, mouse_x, mouse_y)
 
     # Draw ammo counter
-    draw_ammo(screen, bullets, font, shell_img)
+    draw_ammo(screen, bullets, fps_font, shell_img)

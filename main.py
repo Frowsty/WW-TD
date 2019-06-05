@@ -27,7 +27,6 @@ map_Sprite_Group = pygame.sprite.Group()
 terrain_sprites = pygame.sprite.Group()
 mpi_Group = pygame.sprite.Group()
 player_Sprite_Group = pygame.sprite.Group()
-projectile_Sprite_Group = pygame.sprite.Group()
 enemy_Sprite_Group = pygame.sprite.Group()
 
 # Define colors
@@ -92,40 +91,61 @@ def get_image_convert_alpha(path):
         image = pygame.image.load(canonicalized_path).convert_alpha()
     return image
 
+# toggle fullscreen (ON/OFF)
+def toggle_fullscreen(fullscreen):
+    if fullscreen:
+        screen = pygame.display.set_mode(
+            (size[0], size[1]), pygame.RESIZABLE
+        )
+    else:
+        screen = pygame.display.set_mode(
+            (size[0], size[1]), pygame.FULLSCREEN
+        )
+    return not fullscreen
+
 
 # Initialize our player
-player = entities.Player([300, 300])
+player = entities.Player(ammo_font, [300, 300])
 player_Sprite_Group.add(player)
 enemy = entities.Enemy([500, 300])
 enemy_Sprite_Group.add(enemy)
 all_Sprite_Group.add(player)
 all_Sprite_Group.add(enemy)
-map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
+map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group)
 map_Sprite_Group.add(map)
 
 menu_bg = pygame.transform.scale(get_image("pictures/menu_bg.jpg"), (1280, 960))
-bullet_img = pygame.transform.scale(get_image_convert_alpha("pictures/bullet.png"), (15, 15))
+bullet_img = pygame.transform.scale(get_image_convert_alpha("pictures/bullet.png"), (10, 10))
 shell_img = get_image_convert_alpha("pictures/shell.png")
 
+enemies = [entities.Enemy([500, 300]), entities.Enemy([700, 300])]
+bullet_hit_tick = 0
 
-def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
-    global start_game, how_to
+def draw_gamewindow(screen, mouse_x, mouse_y, kb_input, fps):
+    global start_game, how_to, was_pushed
     screen.fill(BLACK)
 
     if start_game == True:
         screen.blit(menu_bg, (0, 0))
-        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, clock, shell_img)
-        player.draw(screen, ammo_font, mouse_x, mouse_y)
-        player.actions(ui.auto_reload.get_state())
-        enemy.draw(screen)
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, font, clock, shell_img)
+        player.ammo_reload_toggle(ui.auto_reload.get_state())
+        player.draw(screen)
+        player.actions()
+        for enemy in enemies:
+            enemy.draw(screen, player.cur_pos, player.player_frames[0], fps, player.dead)
+            if enemy.hit_player == True:
+                player.health -= 15
+                player.cur_pos += pygame.math.Vector2(75, 0).rotate(-enemy.direction)
+                enemy.hit_player = False
 
         for bullet in player.bullets:
             bullet.draw(screen, bullet_img)
-            if projectile_Sprite_Group.has(bullet):
-                projectile_Sprite_Group.remove(bullet)
-            else:
-                projectile_Sprite_Group.add(bullet)
-        # todo check bullets for sprite status, add them to their own group, add group to update and draw functions
+            for enemy in enemies:
+                bullet.collision_check(enemy.cur_pos, enemy.player_frame)
+                if bullet.hit_target == True:
+                    enemy.health -= bullet.damage
+                    enemies.pop(enemies.index(enemy))
+                    bullet.hit_target = False
 
     if how_to == True:
         ui.draw_howto(screen, mouse_x, mouse_y, font, start_game, menu_bg)
@@ -152,27 +172,35 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
         how_to = False
         start_game = False
 
+fullscreen = False
 
 while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
             quit()
+        if pygame.key.get_pressed()[pygame.K_F12]:
+            fullscreen = toggle_fullscreen(fullscreen)
 
         if pygame.key.get_pressed()[pygame.K_F3]:
             Map_Shown = not Map_Shown
+            player.bullets.clear()
+            enemies.clear()
             sleep(0.10)
         if Map_Shown:
             if pygame.key.get_pressed()[pygame.K_m]:
                 for sprite in mpi_Group:
                     sprite.toggle_movement()
+                sleep(0.10)
             mpi_Group.update(screen)
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
 
+    fps = clock.tick(60) / 1000.0
+
     #player_Sprite_Group.draw(screen)
-    draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input)
+    draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input, fps)
 
 
     all_Sprite_Group.update()

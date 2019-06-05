@@ -7,6 +7,7 @@ TODO - Encounter maps will be randomly populated.
 TODO - We should implement health level,  death ends game.
 TODO -Would love to implement inventory system and supply needs but don't want to put the cart before the horse
 TODO - Later i can give the opportunity for the player to change destination to a nearby poi, then back to trail.
+TODO - add a background or remove margins with the wang tile blit... also seperate scenes
 
 '''
 TODO finish rivers -.... come back to this later
