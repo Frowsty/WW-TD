@@ -7,6 +7,7 @@ import a_star
 import os
 from os import path
 import math
+import random_encounter
 
 
 #constants
@@ -145,8 +146,6 @@ class Base_grid(pygame.sprite.Sprite):
         self.screen_Grid(screen, 14, 10, _Multiplier)
 
 
-#todo create random encounters
-#todo create conditions to triggur random encounters
 
 class map_Player_Icon(pygame.sprite.Sprite):
     def __init__(self, screen, pos, waypoints, map):
@@ -171,6 +170,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.time_since_last_check = pygame.time.get_ticks()
         self.pop_list = []
         self.find_total_distance()
+        self.distance_since_encounter = 0
 
     def load_images(self):
         img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
@@ -235,9 +235,12 @@ class map_Player_Icon(pygame.sprite.Sprite):
                 self.waypoint_index = (self.waypoint_index + 1) % len(self.waypoints)
                 self.target = self.waypoints[self.waypoint_index]
                 self.distance_pop()
+                self.distance_since_encounter = self.distance
             if self.distance <= self.target_radius:
                 #if we're approaching, then slow down
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
+                if self.random_encounter(self.distance_since_encounter, self.distance):
+                    random_encounter.random_Encounter(screen)
             else:
                 self.vel = heading * self.max_speed
             if self.waypoint_index >= len(self.waypoints):
@@ -252,6 +255,8 @@ class map_Player_Icon(pygame.sprite.Sprite):
             # distance to target
             self.distance = heading.length()
             self.pos = self.pos
+            if self.distance_since_encounter == 0:
+                self.distance_since_encounter = self.distance
 
     def draw(self, screen):
         if self.moving == True:
@@ -277,6 +282,16 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
     def distance_till_end(self):
         return self.finish_distance
+
+    def random_encounter(self, time, distance):
+        r = random.randint(0,100)
+        percentage = round(time/distance)
+        if (r + percentage) > 75:
+            return True
+        else:
+            return False
+
+
 
     def find_total_distance(self):
         self.finish_distance = 0

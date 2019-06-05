@@ -27,6 +27,8 @@ map_Sprite_Group = pygame.sprite.Group()
 terrain_sprites = pygame.sprite.Group()
 mpi_Group = pygame.sprite.Group()
 player_Sprite_Group = pygame.sprite.Group()
+projectile_Sprite_Group = pygame.sprite.Group()
+enemy_Sprite_Group = pygame.sprite.Group()
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -94,7 +96,10 @@ def get_image_convert_alpha(path):
 # Initialize our player
 player = entities.Player([300, 300])
 player_Sprite_Group.add(player)
+enemy = entities.Enemy([500, 300])
+enemy_Sprite_Group.add(enemy)
 all_Sprite_Group.add(player)
+all_Sprite_Group.add(enemy)
 map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group)
 map_Sprite_Group.add(map)
 
@@ -107,17 +112,19 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input):
     global start_game, how_to
     screen.fill(BLACK)
 
-    # To prevent screen from blinking black we're calling draw_howto first if
-    # player choose How To screen in main menu
-
     if start_game == True:
         screen.blit(menu_bg, (0, 0))
         ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, clock, shell_img)
-        player.draw(screen)
-        player.actions(screen, kb_input, ui.auto_reload.get_state())
+        player.draw(screen, ammo_font, mouse_x, mouse_y)
+        player.actions(ui.auto_reload.get_state())
+        enemy.draw(screen)
 
         for bullet in player.bullets:
             bullet.draw(screen, bullet_img)
+            if projectile_Sprite_Group.has(bullet):
+                projectile_Sprite_Group.remove(bullet)
+            else:
+                projectile_Sprite_Group.add(bullet)
         # todo check bullets for sprite status, add them to their own group, add group to update and draw functions
 
     if how_to == True:
@@ -164,10 +171,11 @@ while True:
     mouse_x, mouse_y = pygame.mouse.get_pos()
     keyboard_input = pygame.key.get_pressed()
 
-    all_Sprite_Group.update()
-
+    #player_Sprite_Group.draw(screen)
     draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input)
 
+
+    all_Sprite_Group.update()
     pygame.display.update()
     # set max ticks per second (FPS)
     clock.tick(60)
