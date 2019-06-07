@@ -148,9 +148,12 @@ class Base_grid(pygame.sprite.Sprite):
 
 
 class map_Player_Icon(pygame.sprite.Sprite):
-    def __init__(self, screen, pos, waypoints, map, player_Group):
+    def __init__(self, screen, pos, waypoints, map, player_Group, player):
         pygame.sprite.Sprite.__init__(self)
+        self.screen = screen
+        self.map = map
         self.images = []
+        self.player = player
         self.load_images()
         self.image = self.images[0]
         self.img_counter = 0
@@ -243,7 +246,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
                 if self.random_encounter(self.distance_since_encounter, self.distance):
                     self.moving = False
-                    random_encounter.random_Encounter(screen, self.player_Group)
+                    random_encounter.random_Encounter(screen, self.player, self.player_Group)
             else:
                 self.vel = heading * self.max_speed
             if self.waypoint_index >= len(self.waypoints):
@@ -332,8 +335,9 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
 
 class GameMapController(pygame.sprite.Sprite):
-    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group):
+    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player):
         self.player_Group = player_Sprite_Group
+        self.player = player
         pygame.sprite.Sprite.__init__(self)
         self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group)
         self.list_Of_Poi = self.poi_Generation(self.trail_Points)
@@ -394,7 +398,7 @@ class GameMapController(pygame.sprite.Sprite):
         self.end_Point = node(50, self.trail_Nodes[-1][1], './images/placeholder/end.png', screen, _Multiplier)
         map_Sprite_Group.add(self.end_Point)
 
-        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, self, self.player_Group)
+        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, self, self.player_Group, self.player)
         mpi_Group.add(self.player_icon)
         return self.trail_Nodes, self.end_Point, self.start
 

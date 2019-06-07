@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="35" tilewidth="64" tileheight="64" infinite="0" nextlayerid="9" nextobjectid="45">
+<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="35" tilewidth="64" tileheight="64" infinite="0" nextlayerid="9" nextobjectid="46">
  <tileset firstgid="1" source="temp.tsx"/>
  <tileset firstgid="253" source="try2.tsx"/>
  <layer id="7" name="Tile Layer 1" width="35" height="35">
@@ -92,7 +92,7 @@
   <object id="32" x="706" y="765" width="60" height="453"/>
   <object id="33" x="453" y="704" width="314" height="63"/>
   <object id="34" name="wall" type="wall" x="224.333" y="1410.5" width="153.333" height="58"/>
-  <object id="38" name="player" type="player" x="1053.33" y="613.333">
+  <object id="38" name="player" type="player" x="1053.33" y="613.333" visible="0">
    <point/>
   </object>
   <object id="39" name="wall" type="wall" x="1022" y="69.6667" width="65.3333" height="442"/>
@@ -101,5 +101,8 @@
   <object id="42" name="wall" type="wall" x="896.667" y="447" width="122.667" height="59.3333"/>
   <object id="43" name="wall" type="wall" x="646" y="68.3333" width="440" height="54"/>
   <object id="44" name="map" type="map" x="179.5" y="1342.17" width="251.5" height="190.167"/>
+  <object id="45" name="player" type="player" x="989" y="749">
+   <point/>
+  </object>
  </objectgroup>
 </map>

@@ -18,26 +18,31 @@ def get_image(path):
 
 
 class random_Encounter():
-    def __init__(self, screen, player_group):
-
+    def __init__(self, screen, player, player_group):
+        self.player = player
+        self.player_group = player_group
+        self.screen = screen
         self.looping = True
 
-        for sprite in player_group:
-            self.player = sprite
-        self.loop(screen, player_group)
+
+        self.loop(self.player_group)
 
 
 
 
 
 
-    def loop(self,screen, player_group):
+    def loop(self):
+        ammo_font = pygame.font.SysFont("Arial", 30)
+        clock = pygame.time.Clock()
+        font = pygame.font.SysFont("Arial", 20)
+        shell_img = get_image_convert_alpha("pictures/shell.png")
         while self.looping:
             pygame.event.get()
-            screen.fill((0,0,0))
+            self.screen.fill((0,0,0))
             image = get_image('./images/cards/broken_wheel.png')
             w, h = pygame.display.get_surface().get_size()
-            screen.blit(image, ((w // 2) - (image.get_width()//2),
+            self.screen.blit(image, ((w // 2) - (image.get_width()//2),
                                 (h// 2) - (image.get_height() //2)))
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
@@ -54,22 +59,51 @@ class random_Encounter():
         self.camera = camera.Camera(1000,1000)
 
         while self.encounter:
+            self.screen.fill((0, 0, 0))
             pygame.event.pump()
-            self.player.actions()
-            screen.fill((0,0,0))
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            keyboard_input = pygame.key.get_pressed()
 
-            self.camera.update(self.player)
+            fps = clock.tick(60) / 1000.0
 
-            self.draw(screen, player_group)  #draws the map
+            self.screen.blit(self.map_img, camcam.apply(self.map))
+            camcam.update(player)
+            self.all_Sprite_Group.update()
+            ui.ingame_interface(self.screen, mouse_x, mouse_y, self.player.current_ammo, ammo_font, font, clock, shell_img)
+            self.player.ammo_reload_toggle(ui.auto_reload.get_state())
+            # ammo_font and screen are passed in on creation
 
-            self.player.draw(screen)
+            for sprite in all_Sprite_Group:
+                self.screen.blit(sprite.image, camcam.apply(sprite))
+
+            # enemy hits player
+            hits = pygame.sprite.spritecollide(self.player, enemies, False, collide_hit_rect)
+            for hit in hits:
+                if random < 0.7:
+                    choice(self.player_hit_sounds).play()
+                self.player.health -= settings.MOB_DAMAGE
+                hit.vel = vec(0, 0)
+            if hits:
+                self.player.hit()
+                player.rect += pygame.math.Vector2(75, 0).rotate(-hit.direction)
+            # bullets hit enemys
+            hits = pygame.sprite.groupcollide(enemies, projectile_Group, False, True)
+            for enemy in hits:
+                for bullet in hits[enemy]:
+                    enemy.health -= bullet.damage
+                enemy.vel = vec(0, 0)
+
+            hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)
+            if hits:
+                if len(enemies) < 1:
+                    break
 
             pygame.display.flip()
             pygame.time.Clock().tick(60)
 
 
     def select_map(self):
-        self.load_map('./tilesets/temptown.tmx')
+        self.load_map('./tilesets/random1.tmx')
 
     def load_map(self, filename):
         #needs random file selection per level, one level hard coded for testing
@@ -86,13 +120,13 @@ class random_Encounter():
         #only triggures on encounters with people or animals
         pass
 
-    def draw(self, screen, player_group):
+    def draw(self):
         #todo add camera class, then add $, self.camera.apply_rect(self.map_rect)$ to the variable below
-        screen.blit(self.map_img, (0,0))
+        self.screen.blit(self.map_img, (0,0))
 
 
-        for sprite in player_group:
-            screen.blit(sprite.image, self.camera.apply(sprite))
+        for sprite in self.player_group:
+            self.screen.blit(sprite.image, self.camera.apply(sprite))
 
 
 

@@ -72,7 +72,7 @@ def collide_with_walls(sprite, group, dir):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, dt, font, walls, projectile_Group, all_sprites, player_Sprite_Group, gun_flashes, screen, auto_reload = False,position=[0, 0]):
+    def __init__(self, dt, font, walls, projectile_Group, all_sprites, player_Sprite_Group, gun_flashes, screen, auto_reload, x, y):
         self.walls = walls
         self.dt = dt
         self.projectile_group = projectile_Group
@@ -91,7 +91,6 @@ class Player(pygame.sprite.Sprite):
         self.image = self.player_frames[0]
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
-        self.rect.center = position
         self.reverse_frames = False
         self.ammo_max = 5
         self.current_ammo = 5
@@ -110,6 +109,8 @@ class Player(pygame.sprite.Sprite):
         self.dir_facing = 0 #dir in radians/angle
         self.mode = ''
         self.max_health = 100
+        self.vel = pygame.math.Vector2(0,0)
+        self.pos = pygame.math.Vector2(x,y)
 
         # Sound loading
         pygame.mixer.music.load(settings.BG_MUSIC)
@@ -142,15 +143,15 @@ class Player(pygame.sprite.Sprite):
         self.player_frames.append(get_image("character_frames/character_reload.png"))
 
 
-    def clamp_movement(self):
-        if self.rect.x >= 1280 - self.player_frames[0].get_width() - 50:
-            self.rect.x = 1280 - self.player_frames[0].get_width() - 50
-        if self.rect.x <= 50:
-            self.rect.x = 50
-        if self.rect.x >= 960 - self.player_frames[0].get_height() - 50:
-            self.rect.x = 960 - self.player_frames[0].get_height() - 50
-        if self.rect.x <= 50:
-            self.rect.x = 50
+    # def clamp_movement(self):
+    #     if self.rect.x >= 1280 - self.player_frames[0].get_width() - 50:
+    #         self.rect.x = 1280 - self.player_frames[0].get_width() - 50
+    #     if self.rect.x <= 50:
+    #         self.rect.x = 50
+    #     if self.rect.x >= 960 - self.player_frames[0].get_height() - 50:
+    #         self.rect.x = 960 - self.player_frames[0].get_height() - 50
+    #     if self.rect.x <= 50:
+    #         self.rect.x = 50
 
     def ammo_reload_toggle(self, state):
         self.ammo_reload = state
@@ -185,32 +186,34 @@ class Player(pygame.sprite.Sprite):
         #self.barrel_Offset, self.dir_facing
 
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.rect.y -= settings.PLAYER_SPEED
+            self.vel = pygame.math.Vector2(0, -settings.PLAYER_SPEED)
             self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 90)
             self.barrel_Offset = (10, -25)
             self.dir_facing = 270
-
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.rect.y += settings.PLAYER_SPEED
+            self.vel = pygame.math.Vector2(0, settings.PLAYER_SPEED)
             self.image = pygame.transform.rotate(self.player_frames[self.walkcount], -90)
             self.barrel_Offset = (-10, 25)
             self.dir_facing = 90
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.rect.x -= settings.PLAYER_SPEED
+            self.vel = pygame.math.Vector2(-settings.PLAYER_SPEED, 0)
             self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 180)
             self.barrel_Offset = (-25, -10)
             self.dir_facing = 180
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.rect.x += settings.PLAYER_SPEED
+            self.vel = pygame.math.Vector2(settings.PLAYER_SPEED, 0)
             self.image = self.player_frames[self.walkcount]
             self.barrel_Offset = (25, 10)
             self.dir_facing = 0
+
 
         if keys[pygame.K_SPACE]:
             self.shoot()
 
         if keys[pygame.K_r]:
             self.reload()
+
+
 
     def reload(self):
         if self.current_ammo < self.ammo_max:
@@ -232,7 +235,14 @@ class Player(pygame.sprite.Sprite):
 
     def actions(self):
         self.get_keys()
-
+        self.rect = self.image.get_rect()
+        self.rect.center = self.pos
+        self.pos += self.vel * self.dt
+        self.hit_rect.centerx = self.pos.x
+        collide_with_walls(self, self.walls, 'x')
+        self.hit_rect.centery = self.pos.y
+        collide_with_walls(self, self.walls, 'y')
+        self.rect.center = self.hit_rect.center
 
     def shoot(self):
         if (pygame.time.get_ticks() - self.fired_tick) >= 500:

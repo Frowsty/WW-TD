@@ -69,6 +69,7 @@ Map_Shown = False
 
 # Set window title
 pygame.display.set_caption("WW - TD")
+pygame.key.set_repeat(300,100)
 
 # Define Clock
 clock = pygame.time.Clock()
@@ -123,11 +124,11 @@ dt = clock.tick(60) / 1000.0
 
 # Initialize our player
 #passing in groups to player instance for inheritence
-player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprite_Group, player_Sprite_Group, gun_flashes, screen, False, [300, 300])
+player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprite_Group, player_Sprite_Group, gun_flashes, screen, False, -10, -10)
 
 #removed enemies from manually being placed on board, now enemies spawn on markers in tile maps from the maplogic
 
-map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group)
+map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player)
 map_Sprite_Group.add(map)
 
 
@@ -145,7 +146,7 @@ menu_input = ""
 def Map_screen():
     map.showing = True
     player.bullets.clear()
-    enemy_Sprite_Group.clear()
+    enemy_Sprite_Group.clear(screen, (0,0,settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
     sleep(0.10)
 
     while map.showing:
@@ -164,18 +165,18 @@ def Map_screen():
 def load_map():
     filename = './tilesets/temptown.tmx'
     # needs random file selection per level, one level hard coded for testing
-    map = tilemap.TiledMap(filename)
-    map_img = map.make_map()
+    tile_of_map = tilemap.TiledMap(filename)
+    map_img = tile_of_map.make_map()
     map_rect = map_img.get_rect()
-    return map, map_img, map_rect
+    return tile_of_map, map_img, map_rect
 
 
 def start_town(mouse_x, mouse_y):
-    global walls_Group, enemey_Sprite_Group
+    global walls_Group, enemey_Sprite_Group, powerup_tick
     enemies = enemy_Sprite_Group
 
-    map, map_img, map_rect = load_map()
-    map.rect = map_rect
+    tile_of_map, map_img, map_rect = load_map()
+    tile_of_map.rect = map_rect
     encounter = True
 
     if ui.settings_powerup_toggle.get_state() == True:
@@ -234,19 +235,21 @@ def start_town(mouse_x, mouse_y):
                     powerup_list.pop(powerup_list.index(powerup))
 
 
-    for tile_object in map.tmxdata.objects:
+    for tile_object in tile_of_map.tmxdata.objects:
         obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
                          tile_object.y + tile_object.height / 2)
         if tile_object.name == 'player':
             player.rect.x = obj_center.x
+            player.pos.x = player.rect.x
             player.rect.y = obj_center.y
+            player.pos.y = player.pos.y
         if tile_object.name == 'map':
             entities.Objective(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, objective_Group)
         if tile_object.name == 'wall':
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
-    camcam = camera.Camera(map.width, map.height)
+    camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
 
 
     while encounter:
@@ -257,7 +260,7 @@ def start_town(mouse_x, mouse_y):
 
         fps = clock.tick(60) / 1000.0
 
-        screen.blit(map_img, camcam.apply(map))
+        screen.blit(map_img, camcam.apply(tile_of_map))
         camcam.update(player)
         all_Sprite_Group.update()
         ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
@@ -284,6 +287,10 @@ def start_town(mouse_x, mouse_y):
             for bullet in hits[enemy]:
                 enemy.health -= bullet.damage
             enemy.vel = vec(0,0)
+
+        hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)
+        if hits:
+            break
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)

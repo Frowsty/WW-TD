@@ -39,7 +39,7 @@ clock = pygame.time.Clock()
 
 start_game = False
 how_to = False
-PLAYER_SPEED = 15
+PLAYER_SPEED = 200
 PLAYER_HIT_RECT = pygame.Rect(0,0, 40, 40)
 PLAYER_HEALTH = 100
 PLAYER_ROT_SPEED = 10
