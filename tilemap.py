@@ -1,6 +1,10 @@
 import pytmx
 import pygame
+import settings
+from settings import *
 
+def collide_hit_rect(one, two):
+    return one.hit_rect.colliderect(two.rect)
 
 class TiledMap:
     def __init__(self, filename):

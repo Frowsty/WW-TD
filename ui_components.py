@@ -128,10 +128,13 @@ def menu_system(mouse_x, mouse_y, did_game_start):
     global show_ctrls, show_story
 
     if menu_quit.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+
         return "QUIT"
     if menu_start.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+
         return "START"
     if menu_howto.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+
         return "HOWTO"
     if menu_back.clicked(mouse_x, mouse_y) == True and did_game_start == False:
         show_ctrls = False
@@ -143,7 +146,7 @@ def menu_system(mouse_x, mouse_y, did_game_start):
 
 
 def draw_ammo(screen, bullets, font, shell_img):
-    ammo_text = font.render(f"{5 - len(bullets)}x", True, BLACK)
+    ammo_text = font.render(f"{bullets}x", True, BLACK)
     screen.blit(ammo_text, (45, 920))
     screen.blit(shell_img, (-20, 870))
 
