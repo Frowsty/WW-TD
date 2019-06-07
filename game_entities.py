@@ -6,7 +6,7 @@ from random import uniform, choice, randint, random
 import settings
 from settings import *
 from tilemap import collide_hit_rect
-
+import ui_components as ui
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -15,6 +15,7 @@ WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+DARK_RED = (150, 0, 0)
 
 YELLOW = (255, 255, 0)
 DK_GREEN = (51, 102, 0)
@@ -38,6 +39,14 @@ def get_image(path):
     return image
 
 
+def get_image_convert_alpha(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert_alpha()
+    return image
+
 vec = pygame.math.Vector2
 
 def collide_with_walls(sprite, group, dir):
@@ -60,36 +69,32 @@ def collide_with_walls(sprite, group, dir):
             sprite.vel.y = 0
             sprite.hit_rect.centery = sprite.pos.y
 
-# player_frames = [pygame.transform.scale(pygame.image.load("character_frames/frame_1.png"), (200, 200)),
-#                  pygame.transform.scale(pygame.image.load("character_frames/frame_2.png"), (200, 200)),
-#                  pygame.transform.scale(pygame.image.load("character_frames/frame_3.png"), (200, 200)),
-#                  pygame.transform.scale(pygame.image.load("character_frames/frame_4.png"), (200, 200))]
 
-# bullet = pygame.transform.scale(pygame.image.load("pictures/bullet.png"), (25, 25))
-# shell = pygame.transform.scale(pygame.image.load("pictures/shell.png"), (50, 50))
 
 class Player(pygame.sprite.Sprite):
-
-    def __init__(self, font, all_sprites, player_Sprite_Group, gun_flashes, auto_reload = False,position=[0, 0]):
-        self.all_sprites = all_sprites
+    def __init__(self, dt, font, walls, projectile_Group, all_sprites, player_Sprite_Group, gun_flashes, screen, auto_reload = False,position=[0, 0]):
+        self.walls = walls
+        self.dt = dt
+        self.projectile_group = projectile_Group
+        self.all_Sprite_Group = all_sprites
         self.gun_flashes = gun_flashes
         self.player_Sprite_Group = player_Sprite_Group
-        self.groups = self.all_sprites, self.player_Sprite_Group
-        pygame.sprite.Sprite.__init__(self)
+        self.groups = self.all_Sprite_Group, self.player_Sprite_Group
+
+        pygame.sprite.Sprite.__init__(self, self.groups)
         self.auto_reload = auto_reload
         self.font = font
-        self.cur_pos = position
+        self.screen = screen
         self.walkcount = 0
         self.player_frames = []
         self.frames = self.load_frames()
         self.image = self.player_frames[0]
         self.rect = self.image.get_rect()
-        self.Rect = self.rect
+        self.hit_rect = self.rect
+        self.rect.center = position
         self.reverse_frames = False
-        self.player_facing = 0
-        self.velocity = 20
-        self.bullets = []
-        self.ammo = 5
+        self.ammo_max = 5
+        self.current_ammo = 5
         self.fired_tick = pygame.time.get_ticks()
         self.reload_tick = pygame.time.get_ticks()
         self.reloading = False
@@ -99,6 +104,12 @@ class Player(pygame.sprite.Sprite):
         self.should_knockback = False
         self.knockback = 0
         self.weapon = 'pistol'
+        self.clock = pygame.time.Clock()
+        self.bullets = []
+        self.barrel_Offset = (25, 10) # in pixels
+        self.dir_facing = 0 #dir in radians/angle
+        self.mode = ''
+        self.max_health = 100
 
         # Sound loading
         pygame.mixer.music.load(settings.BG_MUSIC)
@@ -113,130 +124,45 @@ class Player(pygame.sprite.Sprite):
                 s.set_volume(0.3)
                 self.weapon_sounds[weapon].append(s)
 
+    def update_settings(self):
+
+        if self.mode == "EASY":
+            self.damage = 50
+            self.health = 100
+        if self.mode == "MEDIUM":
+            self.damage = 34
+            self.health = 75
+        if self.mode == "HARD":
+            self.damage = 25
+            self.health = 50
 
 
     def load_frames(self):
         self.player_frames.append(get_image("character_frames/character_main.png"))
         self.player_frames.append(get_image("character_frames/character_reload.png"))
 
-    # def cycle_animation(self):
-
-    #     if self.reverse_frames == True:
-    #         self.walkcount -= 1
-    #     else:
-    #         self.walkcount += 1
-
-    #     if self.walkcount == 3:
-    #         self.reverse_frames = True
-    #     if self.walkcount == 0 and self.reverse_frames == True:
-    #         self.reverse_frames = False
 
     def clamp_movement(self):
-        if self.cur_pos[0] >= 1280 - self.player_frames[0].get_width() - 50:
-            self.cur_pos[0] = 1280 - self.player_frames[0].get_width() - 50
-        if self.cur_pos[0] <= 50:
-            self.cur_pos[0] = 50
-        if self.cur_pos[1] >= 960 - self.player_frames[0].get_height() - 50:
-            self.cur_pos[1] = 960 - self.player_frames[0].get_height() - 50
-        if self.cur_pos[1] <= 50:
-            self.cur_pos[1] = 50
+        if self.rect.x >= 1280 - self.player_frames[0].get_width() - 50:
+            self.rect.x = 1280 - self.player_frames[0].get_width() - 50
+        if self.rect.x <= 50:
+            self.rect.x = 50
+        if self.rect.x >= 960 - self.player_frames[0].get_height() - 50:
+            self.rect.x = 960 - self.player_frames[0].get_height() - 50
+        if self.rect.x <= 50:
+            self.rect.x = 50
 
     def ammo_reload_toggle(self, state):
         self.ammo_reload = state
 
-    def actions(self):
-
-        if pygame.key.get_pressed()[pygame.K_w]:
-            self.rect.y -= self.velocity
-            self.player_facing = 0
-
-        if pygame.key.get_pressed()[pygame.K_s]:
-            self.rect.y += self.velocity
-            self.player_facing = 2
-
-        if pygame.key.get_pressed()[pygame.K_a]:
-            self.rect.x -= self.velocity
-            self.player_facing = 1
-
-        if pygame.key.get_pressed()[pygame.K_d]:
-            self.rect.x += self.velocity
-            self.player_facing = 3
-
-        # self.cycle_animation()
-        #self.clamp_movement()
-
-        for bullet in self.bullets:
-            if bullet.direction == 1 or bullet.direction == 3:
-                if bullet.x < 1280 and bullet.x > 0:
-                    if bullet.y < 960 and bullet.y > 0:
-                        bullet.x += bullet.velocity
-            elif bullet.direction == 0 or bullet.direction == 2:
-                if bullet.y < 960 and bullet.y > 0:
-                    if bullet.x < 1280 and bullet.x > 0:
-                        bullet.y += bullet.velocity
-
-        if pygame.key.get_pressed()[pygame.K_r] or self.reloading == True or (
-                self.auto_reload == True and len(self.bullets) == 5):
-            if len(self.bullets) != 0:
-                self.reloading = True
-
-                if self.bullets[-1].x >= 1280 or self.bullets[-1].x <= 0 or self.bullets[-1].y >= 960 or self.bullets[
-                    -1].y <= 0:
-                    for bullet in self.bullets:
-                        if (pygame.time.get_ticks() - self.reload_tick) >= 250:
-                            s = pygame.mixer.Sound('./sounds/shells.wav')
-                            s.set_volume(0.3)
-                            s.play()
-
-
-                            self.bullets.pop(self.bullets.index(bullet))
-                            self.walkcount = 1
-                            self.reload_tick = pygame.time.get_ticks()
-
-                    if len(self.bullets) == 0:
-                        self.reloading = False
-                        self.walkcount = 0
-
-        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
-            self.fired_tick = pygame.time.get_ticks()
-            if len(self.bullets) < self.ammo:
-
-                if self.player_facing == 0:
-                    self.bullets.append(Projectile(round(self.rect[0] + self.player_frames[0].get_width() / 2),
-                                                   round(self.rect[1] - 10), self.player_facing,
-                                                   self.all_sprites, self.gun_flashes))
-                if self.player_facing == 1:
-                    self.bullets.append(Projectile(round(self.rect[0] - 10),
-                                                   round(self.rect[1] + 8), self.player_facing,
-                                                   self.all_sprites, self.gun_flashes))
-                if self.player_facing == 2:
-                    self.bullets.append(Projectile(round(self.rect[0] + 8),
-                                                   round(self.rect[1] + self.player_frames[0].get_height() + 11),
-                                                   self.player_facing, self.all_sprites, self.gun_flashes))
-                if self.player_facing == 3:
-                    self.bullets.append(Projectile(round(self.rect[0] + self.player_frames[0].get_width()),
-                                                   round(self.rect[1] + self.player_frames[0].get_height() / 1.6),
-                                                   self.player_facing, self.all_sprites, self.gun_flashes))
-                snd = choice(self.weapon_sounds[self.weapon])
-                if snd.get_num_channels() > 2:
-                    snd.stop()
-                snd.play()
-
-
-    def draw(self, screen):
-
+    def update(self):
+        self.ammo_reload_toggle(ui.auto_reload.get_state())
         if self.health <= 0:
             self.health = 0
 
+
         if self.health > 0:
-            if self.player_facing == 0:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.rect)
-            if self.player_facing == 1:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.rect)
-            if self.player_facing == 2:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.rect)
-            if self.player_facing == 3:
-                screen.blit(self.player_frames[self.walkcount], self.rect)
+            self.dead = False
         else:
             self.dead = True
 
@@ -248,13 +174,97 @@ class Player(pygame.sprite.Sprite):
             self.health_color = ORANGE
         elif self.health > 0 and self.health < 25:
             self.health_color = RED
+        if self.auto_reload == True and self.current_ammo == 0:
+            self.reload()
+
+        self.actions()
+
+    def get_keys(self):
+
+        keys = pygame.key.get_pressed()
+        #self.barrel_Offset, self.dir_facing
+
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.rect.y -= settings.PLAYER_SPEED
+            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 90)
+            self.barrel_Offset = (10, -25)
+            self.dir_facing = 270
+
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.rect.y += settings.PLAYER_SPEED
+            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], -90)
+            self.barrel_Offset = (-10, 25)
+            self.dir_facing = 90
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.rect.x -= settings.PLAYER_SPEED
+            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 180)
+            self.barrel_Offset = (-25, -10)
+            self.dir_facing = 180
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.rect.x += settings.PLAYER_SPEED
+            self.image = self.player_frames[self.walkcount]
+            self.barrel_Offset = (25, 10)
+            self.dir_facing = 0
+
+        if keys[pygame.K_SPACE]:
+            self.shoot()
+
+        if keys[pygame.K_r]:
+            self.reload()
+
+    def reload(self):
+        if self.current_ammo < self.ammo_max:
+            self.reloading = True
+            while self.current_ammo != self.ammo_max:
+                if (pygame.time.get_ticks() - self.reload_tick) >= 250:
+                    s = pygame.mixer.Sound('./sounds/shells.wav')
+                    s.set_volume(0.3)
+                    s.play()
+
+                    self.current_ammo += 1
+                    self.walkcount = 1
+                    self.reload_tick = pygame.time.get_ticks()
+
+            if self.current_ammo == self.ammo_max:
+                self.reloading = False
+                self.walkcount = 0
+
+
+    def actions(self):
+        self.get_keys()
+
+
+    def shoot(self):
+        if (pygame.time.get_ticks() - self.fired_tick) >= 500:
+            self.fired_tick = pygame.time.get_ticks()
+            if self.current_ammo > 0:
+                self.current_ammo -= 1
+
+                self.bullets.append(Projectile(self, self.walls, self.projectile_group, self.gun_flashes,
+                                               self.all_Sprite_Group, self.barrel_Offset, self.rect.center, self.dir_facing,
+                                               self.damage, self.dt))
+                snd = choice(self.weapon_sounds[self.weapon])
+                if snd.get_num_channels() > 2:
+                    snd.stop()
+                snd.play()
+                print("Current_ammo " + str(self.current_ammo))
+                print("Auto reload set to " + str(self.auto_reload))
+                print("auto reload box set to " + str(self.ammo_reload_toggle(ui.auto_reload.get_state())))
+                if self.current_ammo == 0 and self.auto_reload == True:
+                    reload()
+
+
+    def draw(self):
+        ui.show_healthbar.get_state()
         health_text = self.font.render(f"HEALTH: {self.health}", True, self.health_color)
-        screen.blit(health_text, ((1280 / 2), 5))
+        self.screen.blit(health_text, ((1280 / 2), 5))
 
 
 class Enemy(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, enemy_Sprite_Group):
+    def __init__(self, x, y, enemy_Sprite_Group, screen, player):
+        self.player = player
+        self.screen = screen
         self.enemy_Sprite_Group = enemy_Sprite_Group
         self.groups = self.enemy_Sprite_Group
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -266,6 +276,7 @@ class Enemy(pygame.sprite.Sprite):
         self.player_frame = get_image("character_frames/enemy_knife.png")
         self.image = self.player_frame
         self.rect = self.image.get_rect()
+        self.hit_rect = self.rect
         # self.frames = self.load_frames()
         self.health = 100
         self.speed = 20
@@ -274,13 +285,6 @@ class Enemy(pygame.sprite.Sprite):
         self.hit_player = False
         self.direction = pygame.math.Vector2(0, 0)
 
-    # def load_frames(self):
-    #     self.player_frames.append(get_image("character_frames/frame1.png"))
-    #     self.player_frames.append(get_image("character_frames/frame2.png"))
-    #     self.player_frames.append(get_image("character_frames/frame3.png"))
-    #     self.player_frames.append(get_image("character_frames/frame4.png"))
-
-    # def actions(self, player_pos):
 
     def clamp_movement(self):
         if self.rect[0] >= 1280 - self.player_frame.get_width() - 50:
@@ -292,30 +296,30 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect[1] <= 50:
             self.rect[1] = 50
 
-    def collision_check(self, player_pos, player_frame):
-        if self.rect[0] >= player_pos[0] and self.rect[0] <= player_pos[0] + player_frame.get_width():
-            if self.rect[1] >= player_pos[1] and self.rect[1] <= player_pos[1] + player_frame.get_height() and (
+    def collision_check(self):
+        if self.rect[0] >= self.player.rect.x and self.rect[0] <= self.player.rect.x + self.player.image.get_width():
+            if self.rect[1] >= self.player.rect.y and self.rect[1] <= self.player.rect.y + self.player.image.get_height() and (
                     pygame.time.get_ticks() - self.hit_target_tick) >= 500:
                 self.hit_target_tick = pygame.time.get_ticks()
                 self.hit_player = True
 
-    def draw(self, screen, player_pos, player_frame, fps, is_player_dead):
+    def draw(self):
         if self.health <= 0:
             self.health = 0
 
         if self.health > 0:
-            self.direction = (pygame.math.Vector2(player_pos) - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
+            self.direction = (pygame.math.Vector2() - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
                 pygame.math.Vector2(1, 0))
-            screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
+            self.screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
             self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
-            if is_player_dead == False:
+            if not self.player.dead:
                 self.accelerate = pygame.math.Vector2(self.speed, 0).rotate(-self.direction)
             else:
                 self.accelerate = pygame.math.Vector2(0, 0)
             #self.rect += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
             self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
 
-            self.collision_check(player_pos, player_frame)
+            self.collision_check()
             self.clamp_movement()
 
     def draw_health(self):
@@ -330,49 +334,79 @@ class Enemy(pygame.sprite.Sprite):
         if self.health < settings.MOB_HEALTH:
             pygame.draw.rect(self.image, col, self.health_bar)
 
-
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, direction, all_sprites, gun_flashes):
-        self.all_sprites = all_sprites
+    """
+    Projectile - spawns a projectile from a given position at a given direction that does a given amount of damage
+    first pass through the groups:
+               player
+               walls
+               bullets
+               gun_flashes
+               all_sprites
+    then pass in the position
+               pos
+    the direction
+               dir
+    then finally the damage
+               damage
+
+    """
+
+
+    def __init__(self, player, walls, bullets, gun_flashes, all_sprites, barrel_offset, pos, dir, damage, dt):
+        #groups and player instance that spawned the projectile are passed in for easy reference
+        #pygame sprite is initialized to give sprite functionality to the instance and allows for
+        #the sprite to auto added to the groups without naming it
+        self.dt = dt
         self.gun_flashes = gun_flashes
-        pygame.sprite.Sprite.__init__(self)
-        self.x = x
-        self.y = y
-        self.bullet = ""
-        self.direction = direction
-        self.velocity = 45
-        self.hit_target = False
-        self.damage = 40
+        self.player = player
+        self.walls = walls
+        self.bullets = bullets
+        self.all_sprites = all_sprites
+        self.groups = self.all_sprites, self.bullets
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        #bullet image is set to bullet image
+        self.image = get_image_convert_alpha('./images/bullet.png')
+        # position is calculated as a position along a vector from the math module
+        self.x = pos[0]
+        self.y = pos[1]
+        self.x = self.x + barrel_offset[0]
+        self.y = self.y + barrel_offset[1]
+
+        self.pos = pygame.math.Vector2(self.x, self.y)
+        #rect is the actual space the bullet takes up (0,0, width, height)
+
+        self.rect = self.image.get_rect()
+        self.rect.centerx, self.rect.centery = self.pos
+        self.hit_rect = self.rect
+        #hit_rect is used for collision detection, same as rect but can be different
+        self.hit_rect = self.rect
+
+
+
+        #spread allows for random direction from the gun mimicking possible aimming difficulty
+        #while still shooting the basic direction of the gun
+        dir = vec(1,0).rotate(dir)
+        spread = uniform(-settings.WEAPONS[self.player.weapon]['spread'], settings.WEAPONS[self.player.weapon]['spread'])
+        self.dir = dir.rotate(spread)
+        #math used to determine velocity based on the speed, direction and then a small uniform range
+        self.vel = self.dir * settings.WEAPONS[self.player.weapon]['bullet_speed'] * uniform(0.9, 1.1)
+        #sets the spawn time
+        self.spawn_time = pygame.time.get_ticks()
+        #sets the damage of the bullet
+        self.damage = damage
         self.flash = MuzzleFlash((self.x, self.y), self.all_sprites, self.gun_flashes)
 
-
-    def collision_check(self, enemy_pos, enemy_frame):
-        if self.x >= enemy_pos[0] and self.x <= enemy_pos[0] + enemy_frame.get_width():
-            if self.y >= enemy_pos[1] and self.y <= enemy_pos[1] + enemy_frame.get_height():
-                self.hit_target = True
-                self.x = -50
-                self.y = -50
-
-    def draw(self, screen, bullet_img):
-        self.bullet = bullet_img
-
-        if self.hit_target == False:
-            if self.direction == 0:
-                self.velocity = -45
-                if self.y < 960 and self.y > 0:
-                    screen.blit(pygame.transform.rotate(self.bullet, 0), (self.x, self.y))
-            if self.direction == 1:
-                self.velocity = -45
-                if self.x < 1280 and self.x > 0:
-                    screen.blit(pygame.transform.rotate(self.bullet, 90), (self.x, self.y))
-            if self.direction == 2:
-                self.velocity = 45
-                if self.y < 960 and self.y > 0:
-                    screen.blit(pygame.transform.rotate(self.bullet, 180), (self.x, self.y))
-            if self.direction == 3:
-                self.velocity = 45
-                if self.x < 1280 and self.x > 0:
-                    screen.blit(pygame.transform.rotate(self.bullet, -90), (self.x, self.y))
+    def update(self):
+        #updates position by adding velocity and the delta time to the position
+        self.pos += self.vel * self.dt
+        #updates the rect to the bullets position, the rect updating is what updates the image that's beeing blitted
+        self.rect.center = self.pos
+        #sets the bullet to kill itself if it hits a wall or runs out of life (max distance)
+        if pygame.sprite.spritecollideany(self, self.walls):
+            self.kill()
+        if pygame.time.get_ticks() - self.spawn_time > settings.WEAPONS[self.player.weapon]['bullet_lifetime']:
+            self.kill()
 
 
 
@@ -380,6 +414,21 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self, x, y, w, h, walls):
         self.walls = walls
         self.groups = self.walls
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.rect = pygame.Rect(x, y, w, h)
+        self.hit_rect = self.rect
+        self.x = x
+        self.y = y
+        self.rect.x = x
+        self.rect.y = y
+
+
+
+class Objective(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h, objective):
+        self.objective = objective
+        self.groups = self.objective
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.rect = pygame.Rect(x, y, w, h)
@@ -404,5 +453,5 @@ class MuzzleFlash(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
-        if pygame.time.get_ticks() - self.spawn_time > FLASH_DURATION:
+        if pygame.time.get_ticks() - self.spawn_time > settings.FLASH_DURATION:
             self.kill()

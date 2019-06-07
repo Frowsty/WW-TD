@@ -5,11 +5,13 @@ import random
 import ui_components as ui
 import game_entities as entities
 from time import sleep
+
+
 import settings
 from settings import *
-
 import camera
 import tilemap
+from tilemap import *
 import wang
 import a_star
 import os
@@ -32,7 +34,10 @@ terrain_sprites = pygame.sprite.Group()
 mpi_Group = pygame.sprite.Group()
 player_Sprite_Group = pygame.sprite.Group()
 enemy_Sprite_Group = pygame.sprite.Group()
-walls_group = pygame.sprite.Group()
+walls_Group = pygame.sprite.Group()
+projectile_Group = pygame.sprite.Group()
+objective_Group = pygame.sprite.Group()
+
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -69,10 +74,13 @@ pygame.display.set_caption("WW - TD")
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont("Arial", 20)
+big_font = pygame.font.SysFont("Arial", 60)
 ammo_font = pygame.font.SysFont("Arial", 30)
 
 start_game = False
 how_to = False
+settings_menu = False
+
 
 # ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 # instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -111,21 +119,46 @@ def toggle_fullscreen(fullscreen):
 gun_flashes = []
 for img in settings.MUZZLE_FLASHES:
     gun_flashes.append(get_image_convert_alpha(img))
-
+dt = clock.tick(60) / 1000.0
 
 # Initialize our player
+#passing in groups to player instance for inheritence
+player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprite_Group, player_Sprite_Group, gun_flashes, screen, False, [300, 300])
 
-player = entities.Player(ammo_font, all_Sprite_Group, player_Sprite_Group, gun_flashes, [300, 300])
-
+#removed enemies from manually being placed on board, now enemies spawn on markers in tile maps from the maplogic
 
 map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group)
 map_Sprite_Group.add(map)
 
+
 menu_bg = pygame.transform.scale(get_image("pictures/menu_bg.jpg"), (1280, 960))
 bullet_img = pygame.transform.scale(get_image_convert_alpha("pictures/bullet.png"), (10, 10))
 shell_img = get_image_convert_alpha("pictures/shell.png")
+small_shell_img = pygame.transform.scale(get_image_convert_alpha("pictures/shell.png"), (45, 45))
 bullet_hit_tick = 0
+powerup_tick = pygame.time.get_ticks()
+powerup_list = []
+menu_input = ""
 
+
+
+def Map_screen():
+    map.showing = True
+    player.bullets.clear()
+    enemy_Sprite_Group.clear()
+    sleep(0.10)
+
+    while map.showing:
+        map.player_icon.moving = True
+        mpi_Group.update(screen)
+        terrain_sprites.draw(screen)
+        for sprite in map_Sprite_Group:
+            sprite.draw(screen)
+        map_Sprite_Group.draw(screen)
+        mpi_Group.draw(screen)
+
+        pygame.display.update()
+        clock.tick(60)
 
 
 def load_map():
@@ -137,10 +170,68 @@ def load_map():
     return map, map_img, map_rect
 
 
-def start_town(walls_group, enemies):
+def start_town(mouse_x, mouse_y):
+    global walls_Group, enemey_Sprite_Group
+    enemies = enemy_Sprite_Group
+
     map, map_img, map_rect = load_map()
     map.rect = map_rect
     encounter = True
+
+    if ui.settings_powerup_toggle.get_state() == True:
+        if (pygame.time.get_ticks() - powerup_tick) / 1000 >= random.randint(20, 45):
+            powerup_list.append(entities.PowerUp(screen, random.randint(1, 3), [random.randint(200, 1000), 50],
+                                                 pygame.time.get_ticks()))
+            for powerup in powerup_list:
+                powerup.activate = True
+            powerup_tick = pygame.time.get_ticks()
+
+        if len(powerup_list) > 0:
+            for powerup in powerup_list:
+                if powerup.activate == True:
+                    powerup.run(small_shell_img)
+                    powerup.return_attribute(mouse_x, mouse_y)
+
+                if (pygame.time.get_ticks() - powerup.called_tick) / 1000 >= 5 and powerup.clicked_tick == 0:
+                    powerup_list.pop(powerup_list.index(powerup))
+
+                if powerup.activate_attrib == "increase ammo":
+                    if (pygame.time.get_ticks() - powerup.clicked_tick) / 1000 <= 10:
+                        if player.mode == "EASY":
+                            player.ammo = 10
+                        if player.mode == "MEDIUM":
+                            player.ammo = 9
+                        if player.mode == "HARD":
+                            player.ammo = 7
+                        powerup.draw = False
+                    else:
+                        player.ammo = 5
+                        powerup_list.pop(powerup_list.index(powerup))
+                elif powerup.activate_attrib == "increase damage":
+                    if (pygame.time.get_ticks() - powerup.clicked_tick) / 1000 <= 10:
+                        if player.mode == "EASY":
+                            player.damage = 100
+                        if player.mode == "MEDIUM":
+                            player.damage = 50
+                        if player.mode == "HARD":
+                            player.damage = 34
+                        powerup.draw = False
+                    else:
+                        if player.mode == "EASY":
+                            player.damage = 50
+                        if player.mode == "MEDIUM":
+                            player.damage = 34
+                        if player.mode == "HARD":
+                            player.damage = 25
+                        powerup_list.pop(powerup_list.index(powerup))
+                elif powerup.activate_attrib == "increase health":
+                    if player.mode == "EASY":
+                        player.health += 60
+                    if player.mode == "MEDIUM":
+                        player.health += 45
+                    if player.mode == "HARD":
+                        player.health += 30
+                    powerup_list.pop(powerup_list.index(powerup))
 
 
     for tile_object in map.tmxdata.objects:
@@ -149,128 +240,145 @@ def start_town(walls_group, enemies):
         if tile_object.name == 'player':
             player.rect.x = obj_center.x
             player.rect.y = obj_center.y
-        if tile_object.name == 'indian':
-            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group)
+        if tile_object.name == 'map':
+            entities.Objective(tile_object.x, tile_object.y,
+                     tile_object.width, tile_object.height, objective_Group)
         if tile_object.name == 'wall':
             entities.Obstacle(tile_object.x, tile_object.y,
-                     tile_object.width, tile_object.height, walls_group)
+                     tile_object.width, tile_object.height, walls_Group)
     camcam = camera.Camera(map.width, map.height)
 
 
     while encounter:
         screen.fill((0, 0, 0))
         pygame.event.pump()
-        ui.ingame_interface(screen, mouse_x, mouse_y, player.bullets, ammo_font, font, clock, shell_img)
-        player.ammo_reload_toggle(ui.auto_reload.get_state())
-        player.actions()
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        keyboard_input = pygame.key.get_pressed()
 
-        for enemy in enemies:
-            enemy.draw(screen, player.cur_pos, player.player_frames[0], fps, player.dead)
-            if enemy.hit_player == True:
-                player.health -= 15
-                player.cur_pos += pygame.math.Vector2(75, 0).rotate(-enemy.direction)
-                enemy.hit_player = False
-
-        for bullet in player.bullets:
-            bullet.draw(screen, bullet_img)
-            for enemy in enemies:
-                bullet.collision_check(enemy.cur_pos, enemy.player_frame)
-                if bullet.hit_target == True:
-                    enemy.health -= bullet.damage
-                    enemies.pop(enemies.index(enemy))
-                    bullet.hit_target = False
-
-        camcam.update(player)
-        camcam.apply(player)
+        fps = clock.tick(60) / 1000.0
 
         screen.blit(map_img, camcam.apply(map))
+        camcam.update(player)
+        all_Sprite_Group.update()
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
+        player.ammo_reload_toggle(ui.auto_reload.get_state())
+        #ammo_font and screen are passed in on creation
+
 
         for sprite in all_Sprite_Group:
-            if isinstance(sprite, entities.Enemies):
-                sprite.draw_health()
             screen.blit(sprite.image, camcam.apply(sprite))
 
-
-        player.draw(screen)
+        #enemy hits player
+        hits = pygame.sprite.spritecollide(player, enemies, False, collide_hit_rect)
+        for hit in hits:
+            if random < 0.7:
+                choice(self.player_hit_sounds).play()
+            self.player.health -= settings.MOB_DAMAGE
+            hit.vel = vec(0,0)
+        if hits:
+            self.player.hit()
+            player.rect += pygame.math.Vector2(75, 0).rotate(-hit.direction)
+        #bullets hit enemys
+        hits = pygame.sprite.groupcollide(enemies, projectile_Group, False, True)
+        for enemy in hits:
+            for bullet in hits[enemy]:
+                enemy.health -= bullet.damage
+            enemy.vel = vec(0,0)
 
         pygame.display.flip()
         pygame.time.Clock().tick(60)
 
+    Map_screen()
 
 
 
-
-
-
-
-
-def draw_gamewindow(screen, mouse_x, mouse_y, kb_input, fps, walls_group, enemies):
-    global start_game, how_to, was_pushed
+#not sure why kb_input and fps is passed in
+def draw_gamewindow(screen, mouse_x, mouse_y, kb_input, fps):
+    global start_game, settings_menu, how_to, menu_input, was_pushed , powerup_tick, increase_ammo_tick, increase_damage_tick
     screen.fill(BLACK)
 
+
     if start_game == True:
-        start_town(walls_group, enemies)
+        start_town(mouse_x, mouse_y)
 
 
     if how_to == True:
         ui.draw_howto(screen, mouse_x, mouse_y, font, start_game, menu_bg)
 
-    if Map_Shown == True:
-        terrain_sprites.draw(screen)
-        for sprite in map_Sprite_Group:
-            sprite.draw(screen)
-        map_Sprite_Group.draw(screen)
-        mpi_Group.draw(screen)
+    if settings_menu == True:
+        ui.draw_settings(screen, mouse_x, mouse_y, menu_bg)
 
-    # Main menu
-    menu_input = ui.menu_system(mouse_x, mouse_y, start_game)
-    if start_game == False and how_to == False:
+    if start_game == False:
+        menu_input = ui.menu_system(mouse_x, mouse_y, settings_menu)
+    if start_game == False and how_to == False and settings_menu == False:
         ui.update_mm()
-        ui.draw_mm(screen, mouse_x, mouse_y, menu_bg)
+        ui.draw_mm(screen, mouse_x, mouse_y, menu_bg, menu_input)
+
     if menu_input == "QUIT":
         quit()
-    if menu_input == "START":
-        start_game = True
+    if menu_input == "SETTINGS":
+        settings_menu = True
     if menu_input == "HOWTO":
         how_to = True
     if menu_input == "MAIN_MENU":
         how_to = False
         start_game = False
+        settings_menu = False
 
-fullscreen = False
+    if menu_input == "START_EASY":
+        player.mode = "EASY"
+        player.update_settings()
+        start_game = True
+        settings_menu = False
+    if menu_input == "START_MEDIUM":
+        player.mode = "MEDIUM"
+        player.update_settings()
+        start_game = True
+        settings_menu = False
+    if menu_input == "START_HARD":
+        player.mode = "HARD"
+        player.update_settings()
+        start_game = True
+        settings_menu = False
 
-while True:
+    menu_input = ""
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            quit()
-        if pygame.key.get_pressed()[pygame.K_F12]:
-            fullscreen = toggle_fullscreen(fullscreen)
+    fullscreen = False
 
-        if pygame.key.get_pressed()[pygame.K_F3]:
-            Map_Shown = not Map_Shown
+    game_over_text = big_font.render("GAME OVER!", True, RED)
 
-            player.bullets.clear()
-            enemies.clear()
-            sleep(0.10)
-        if Map_Shown:
-            if pygame.key.get_pressed()[pygame.K_m]:
-                for sprite in mpi_Group:
-                    sprite.toggle_movement()
-                sleep(0.10)
-            mpi_Group.update(screen)
+def main():
+    running = True
+    while running:
 
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    keyboard_input = pygame.key.get_pressed()
-
-    fps = clock.tick(60) / 1000.0
-
-    #player_Sprite_Group.draw(screen)
-    draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input, fps, walls_group, enemy_Sprite_Group)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
+                running = False
+                quit()
+            if pygame.key.get_pressed()[pygame.K_F12]:
+                fullscreen = toggle_fullscreen(fullscreen)
 
 
-    all_Sprite_Group.update()
-    pygame.display.update()
-    # set max ticks per second (FPS)
-    clock.tick(60)
 
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        keyboard_input = pygame.key.get_pressed()
+        all_Sprite_Group.update()
+        pygame.display.update()
+
+        #actually Delta Time... not fps
+        fps = clock.tick(60) / 1000.0
+
+        # player_Sprite_Group.draw(screen)
+        if player.health != 0:
+            draw_gamewindow(screen, mouse_x, mouse_y, keyboard_input, fps)
+        else:
+            screen.fill(BLACK)
+            screen.blit(game_over_text,
+                        (1280 / 2 - (game_over_text.get_width() / 2), 960 / 2 - (game_over_text.get_height() / 2)))
+
+
+        # set max ticks per second (FPS)
+        clock.tick(60)
+
+
+main()

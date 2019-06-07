@@ -242,6 +242,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
                 #if we're approaching, then slow down
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
                 if self.random_encounter(self.distance_since_encounter, self.distance):
+                    self.moving = False
                     random_encounter.random_Encounter(screen, self.player_Group)
             else:
                 self.vel = heading * self.max_speed
@@ -340,6 +341,8 @@ class GameMapController(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = -200
         self.rect.y = 200
+        self.showing = False
+
 
 
     def generate_Map(self, screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group):

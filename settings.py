@@ -39,7 +39,7 @@ clock = pygame.time.Clock()
 
 start_game = False
 how_to = False
-PLAYER_SPEED = 10
+PLAYER_SPEED = 15
 PLAYER_HIT_RECT = pygame.Rect(0,0, 40, 40)
 PLAYER_HEALTH = 100
 PLAYER_ROT_SPEED = 10
@@ -48,7 +48,7 @@ BARREL_OFFSET = pygame.math.Vector2(30, 10)
 
 BULLET_IMG = './images/bullet.png'
 WEAPONS = {}
-WEAPONS['pistol'] = {'bullet_speed': 50,
+WEAPONS['pistol'] = {'bullet_speed': 500,
                      'bullet_lifetime': 500,
                      'rate': 250,
                      'kickback': 20,
@@ -56,7 +56,7 @@ WEAPONS['pistol'] = {'bullet_speed': 50,
                      'damage': 10,
                      'bullet_size': 'lg',
                      'bullet_count': 1}
-WEAPONS['shotgun'] = {'bullet_speed': 40,
+WEAPONS['shotgun'] = {'bullet_speed': 400,
                       'bullet_lifetime': 350,
                       'rate': 900,
                       'kickback': 30,
@@ -71,7 +71,7 @@ MOB_IMG = 'zombie1_hold.png'
 MOB_SPEEDS = [7, 15, 14, 9]
 MOB_HIT_RECT = pygame.Rect(6,0, 25, 43)
 MOB_HEALTH = 100
-MOB_DAMAGE = 10
+MOB_DAMAGE = 15
 MOB_KNOCKBACK = 20
 AVOID_RADIUS = 20
 DETECT_RADIUS = 40
@@ -87,7 +87,7 @@ ITEMS_LAYER = 1
 # Effects
 
 
-FLASH_DURATION = 50
+FLASH_DURATION = 15
 
 NIGHT_COLOR = (20, 20, 20)
 LIGHT_RADIUS = (500, 500)

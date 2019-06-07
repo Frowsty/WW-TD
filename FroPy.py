@@ -34,6 +34,8 @@ class Button:
         self.width = width
         self.height = height
         self.text = text
+        self.clicked_tick = pygame.time.get_ticks()
+        self.was_clicked = False
 
     def draw(self, screen, edge=0, font='Arial', text_color=(0, 0, 0)):
         """Function to render our button and add a fitting text to it if text is given by the user"""
@@ -42,7 +44,7 @@ class Button:
         if self.text != '':
             text = scale_text((self.width, self.height), self.text, text_color)
             screen.blit(text, (
-            self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+                self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
     def hovered(self, mouse_x, mouse_y):
         if mouse_x < self.x + self.width and mouse_x > self.x:
@@ -54,8 +56,12 @@ class Button:
         if mouse_x < self.x + self.width and mouse_x > self.x:
             if mouse_y < self.y + self.height and mouse_y > self.y:
                 if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    return True
+                    self.was_clicked = True
+                    self.clicked_tick = pygame.time.get_ticks()
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                return True
         return False
 
 
@@ -70,6 +76,9 @@ class Checkbox:
         self.text_pos = text_pos
         self.text = text
         self.state = state
+        self.style = 1
+        self.was_clicked = False
+        self.clicked_tick = pygame.time.get_ticks()
 
     def draw(self, screen, mouse_x, mouse_y, style=1, font='Arial', text_color=(0, 0, 0)):
         """Draw the instance of our checkbox with specified arguments.
@@ -77,6 +86,9 @@ class Checkbox:
            style = 2 will create a check marker style checkbox
            text_pos = 1 will render text on the left side
            text_pos = 2 will render text on the right side"""
+
+        self.style = style
+
         if style == 1:
             pygame.draw.rect(screen, self.a_color, (self.x, self.y, self.size / 2, self.size / 2))
             pygame.draw.rect(screen, self.b_color, ((self.x + self.size / 2), self.y, self.size / 2, self.size / 2))
@@ -121,17 +133,14 @@ class Checkbox:
 
             if self.state == True:
                 pygame.draw.line(screen, self.b_color, [self.x + (self.size / 2) * 0.2, self.y + (self.size / 2) * 0.5],
-                                 [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95],
-                                 7
-                                 )
+                                 [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95], 7)
+
                 pygame.draw.line(screen, self.b_color,
                                  [self.x + (self.size / 2) * 0.5, self.y + (self.size / 2) * 0.95],
-                                 [self.x + (self.size / 2) * 0.8, self.y + (self.size / 2) * 0.1],
-                                 7
-                                 )
+                                 [self.x + (self.size / 2) * 0.8, self.y + (self.size / 2) * 0.1], 7)
 
         if self.text != '':
-            text = scale_text((self.size * 1.3, self.size * 1.3), self.text, text_color)
+            text = scale_text((self.size * 2, self.size * 2), self.text, text_color)
             # text = font.render(self.text, 1, text_color)
             if self.text_pos == 1:
                 screen.blit(text,
@@ -144,11 +153,23 @@ class Checkbox:
             else:
                 raise ValueError
 
-        if mouse_x < self.x + self.size and mouse_x > self.x:
-            if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
-                if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    self.state = not self.state
+        if self.style == 1:
+            if mouse_x < self.x + self.size and mouse_x > self.x:
+                if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
+                    if pygame.mouse.get_pressed()[0] == True:
+                        self.was_clicked = True
+                        self.clicked_tick = pygame.time.get_ticks()
+        elif self.style == 2:
+            if mouse_x < self.x + self.size / 2 and mouse_x > self.x:
+                if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
+                    if pygame.mouse.get_pressed()[0] == True:
+                        self.was_clicked = True
+                        self.clicked_tick = pygame.time.get_ticks()
+
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                self.state = not self.state
 
     def get_state(self):
         return self.state
@@ -214,20 +235,27 @@ class InputBox:
         self.capture_text = False
         self.text = []
         self.text_width = 0
+        self.was_clicked = False
+        self.clicked_tick = pygame.time.get_ticks()
 
     def draw(self, screen, mouse_x, mouse_y, edge, font="Arial", placeholder_color=(75, 75, 75)):
 
         if mouse_x < self.x + self.width and mouse_x > self.x:
             if mouse_y < self.y + self.height and mouse_y > self.y:
                 if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    self.capture_text = not self.capture_text
+                    self.was_clicked = True
+                    self.clicked_tick = pygame.time.get_ticks()
             else:
                 if pygame.mouse.get_pressed()[0] == True:
                     self.capture_text = False
         else:
             if pygame.mouse.get_pressed()[0] == True:
                 self.capture_text = False
+
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                self.capture_text = not self.capture_text
 
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height), edge)
 
@@ -255,7 +283,7 @@ class InputBox:
 
         scaled_title = scale_text((self.width, self.height), self.title, self.text_color)
         screen.blit(scaled_title, (
-        self.x - (scaled_title.get_width() + 10), self.y + (self.height / 2 - scaled_title.get_height() / 2)))
+            self.x - (scaled_title.get_width() + 10), self.y + (self.height / 2 - scaled_title.get_height() / 2)))
 
     def get_text(self):
         if len(self.text) > 0:
