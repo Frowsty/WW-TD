@@ -8,7 +8,7 @@ import os
 from os import path
 import math
 import random_encounter
-import settings
+
 
 #constants
 _Multiplier = 1
@@ -35,17 +35,28 @@ WHITE = (255, 255, 255)
 #GLOBALS
 _Fullscreen_flag = False
 
+
+#ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
+#instead of wasting memory on a new image. if it hasn't been it loads it.
+_image_library = {}
+
+def get_image(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert()
+    return image
+
 #follow the rabit hole, all classes run their calls to functions in game and main talks to game
 class CL_Terrain(pygame.sprite.Sprite):
-    def __init__(self, game, screen, x, y, value):
-        self.game = game
-        self.screen = screen
+    def __init__(self, x, y, value):
         pygame.sprite.Sprite.__init__(self)
         self.location = []
         self.location.append(x)
         self.location.append(y)
         img = []
-        image_stuff =self.game.get_image(self.set_terrain_image(value))
+        image_stuff =get_image(self.set_terrain_image(value))
         image_stuff = pygame.transform.scale(image_stuff, (80,80))
         img.append(image_stuff)
         self.image = img[0]
@@ -137,12 +148,8 @@ class Base_grid(pygame.sprite.Sprite):
 
 
 class map_Player_Icon(pygame.sprite.Sprite):
-    def __init__(self, screen, pos, waypoints, map, game):
-        self.game = game
-        self.screen = screen
-        self.groups = self.game.mpi_Group
-
-        pygame.sprite.Sprite.__init__(self, self.groups)
+    def __init__(self, screen, pos, waypoints, map, player_Group):
+        pygame.sprite.Sprite.__init__(self)
         self.images = []
         self.load_images()
         self.image = self.images[0]
@@ -157,7 +164,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.target = self.waypoints[self.waypoint_index]
         self.target_radius = 50
         self.moving = False
-
+        self.player_Group= player_Group
         self.distance = 0
         self.finish_distance = 0
         self.random_encounter_clock = 0
@@ -167,52 +174,52 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.distance_since_encounter = 0
 
     def load_images(self):
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon2.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon2.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon3.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon3.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon4.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon4.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon5.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon5.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon6.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon6.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon7.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon7.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon8.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon8.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon9.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon9.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon10.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon10.png')
         img = pygame.transform.scale(img, (50, 50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon11.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon11.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon12.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon12.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon13.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon13.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon14.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon14.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon15.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon15.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
-        img = self.game.get_image('./images/placeholder/map_icon/cowboy_map_icon16.png')
+        img = get_image('./images/placeholder/map_icon/cowboy_map_icon16.png')
         img = pygame.transform.scale(img, (50,50))
         self.images.append(img)
 
@@ -235,7 +242,7 @@ class map_Player_Icon(pygame.sprite.Sprite):
                 #if we're approaching, then slow down
                 self.vel = heading * (self.distance / self.target_radius * self.max_speed)
                 if self.random_encounter(self.distance_since_encounter, self.distance):
-                    random_encounter.random_Encounter(self.screen, self.game)
+                    random_encounter.random_Encounter(screen, self.player_Group)
             else:
                 self.vel = heading * self.max_speed
             if self.waypoint_index >= len(self.waypoints):
@@ -324,20 +331,19 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
 
 class GameMapController(pygame.sprite.Sprite):
-    def __init__(self, game, screen):
-        self.game = game
-        self.screen = screen
-        self.groups = self.game.map_Sprite_Group
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.trail_Points, self.end_Point, self.start = self.generate_Map()
+    def __init__(self, map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group):
+        self.player_Group = player_Sprite_Group
+        pygame.sprite.Sprite.__init__(self)
+        self.trail_Points, self.end_Point, self.start = self.generate_Map(screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group)
         self.list_Of_Poi = self.poi_Generation(self.trail_Points)
-        self.image = self.game.get_image('./images/placeholder/plain.png')
+        self.image = get_image('./images/placeholder/plain.png')
         self.rect = self.image.get_rect()
         self.rect.x = -200
         self.rect.y = 200
 
-    def generate_Map(self):
-        self.map_Grid = [
+
+    def generate_Map(self, screen, _Multiplier, map_Sprite_Group, terrain_sprites, mpi_Group):
+        map_Grid = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -350,15 +356,15 @@ class GameMapController(pygame.sprite.Sprite):
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
 
-        self.game.terrain_list = list()
+        self.terrain_list = list()
         self.terrain = wang.wang_set(width = 14, height = 10)
         for i in range(len(self.terrain)):
             for j in range(len(self.terrain[0])):
                 x = i
                 y = j
                 value = self.terrain[i][j]
-                self.game.terrain_list.append(CL_Terrain(self.game, self.screen, x, y, value))
-                self.game.terrain_sprites.add(self.game.terrain_list[-1])
+                self.terrain_list.append(CL_Terrain(x, y, value))
+                terrain_sprites.add(self.terrain_list[-1])
 
 
         margin = 0
@@ -367,12 +373,14 @@ class GameMapController(pygame.sprite.Sprite):
 
         # starting node's locational data
         start_x = 1114
-        selection = [40, 120, 200, 280, 360, 440, 520, 600, 680, 760]
+        selection = [40, 122, 204, 286, 368, 450, 532, 614, 696, 778]
         start_y = random.choice(selection)
-        self.start = node(start_x, start_y, './images/placeholder/start.png', self.screen, self.game)
+        self.start = node(start_x, start_y, './images/placeholder/start.png', screen, _Multiplier)
+        map_Sprite_Group.add(self.start)
+
 
         # trail logic
-        o_Trail = road(self.screen, self.game, start_x, start_y)
+        o_Trail = road(screen, _Multiplier, start_x, start_y)
         self.trail_Nodes = []
         self.trail_Nodes.append(o_Trail.moving())
 
@@ -380,8 +388,11 @@ class GameMapController(pygame.sprite.Sprite):
             self.trail_Nodes.append(o_Trail.moving())
 
         # end point creation
-        self.end_Point = node(50, self.trail_Nodes[-1][1], './images/placeholder/end.png', self.screen, self.game)
-        self.player_icon = map_Player_Icon(self.screen, self.start.return_Coords(), self.trail_Nodes, self, self.game)
+        self.end_Point = node(50, self.trail_Nodes[-1][1], './images/placeholder/end.png', screen, _Multiplier)
+        map_Sprite_Group.add(self.end_Point)
+
+        self.player_icon = map_Player_Icon(screen, self.start.return_Coords(), self.trail_Nodes, self, self.player_Group)
+        mpi_Group.add(self.player_icon)
         return self.trail_Nodes, self.end_Point, self.start
 
 
@@ -414,7 +425,6 @@ class GameMapController(pygame.sprite.Sprite):
                 y_coord = closest_Point[i][1] - random.randint(0, 15)
             else:
                 dir = 'negative'
-                y_coord = closest_Point[i][1]
             x_coord = closest_Point[i][0]
             name_Choice = random.choice(names_Of_Poi)
             self.list_Of_Poi.append((name_Choice, (x_coord, y_coord), dir))
@@ -424,7 +434,6 @@ class GameMapController(pygame.sprite.Sprite):
 
 
     def draw_Poi(self, screen):
-
         for i in range(len(self.list_Of_Poi)):
             x_coord = self.list_Of_Poi[i][1][0]
             y_coord = self.list_Of_Poi[i][1][1]
@@ -445,7 +454,6 @@ class GameMapController(pygame.sprite.Sprite):
         pass
 
     def draw(self, screen):
-
         self.draw_Poi(screen)
         pygame.draw.line(screen, DK_PURPLE, (self.trail_Points[0][0], self.trail_Points[0][1]), (self.start.return_Coords()), 5)
         for i in range(len(self.trail_Points) - 2):
@@ -455,13 +463,10 @@ class GameMapController(pygame.sprite.Sprite):
 
 
 class node(pygame.sprite.Sprite):
-    def __init__(self, x, y, img, screen, game):
-        self.screen = screen
-        self.game = game
-        self.groups = self.game.map_Sprite_Group
-        pygame.sprite.Sprite.__init__(self, self.groups)
+    def __init__(self, x, y, img, screen, _Multiplier):
+        pygame.sprite.Sprite.__init__(self)
         self.images = []
-        self.image = self.game.get_image(img)
+        self.image = get_image(img)
         self.images.append(self.image)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
@@ -479,9 +484,7 @@ class node(pygame.sprite.Sprite):
 
 
 class road():
-    def __init__(self, screen, game, start_x, start_y):
-        self.screen = screen
-        self.game = game
+    def __init__(self, screen, _Multiplier, start_x, start_y):
         self.starting_x = start_x
         self.starting_y = start_y
         self.road_Points = []
