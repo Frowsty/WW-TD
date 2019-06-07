@@ -105,12 +105,9 @@ BOB_SPEED = 0.3
 #todo change sounds
 # Sounds
 BG_MUSIC = './sounds/12th_Street_Rag_1919.ogg'
-PLAYER_HIT_SOUNDS = ['pain/8.wav', 'pain/9.wav', 'pain/10.wav', 'pain/11.wav']
-ZOMBIE_MOAN_SOUNDS = ['brains2.wav', 'brains3.wav', 'zombie-roar-1.wav', 'zombie-roar-2.wav',
-                      'zombie-roar-3.wav', 'zombie-roar-5.wav', 'zombie-roar-6.wav', 'zombie-roar-7.wav']
-ZOMBIE_HIT_SOUNDS = ['splat-15.wav']
+PLAYER_HIT_SOUNDS = ['./sounds/pain/8.wav', './sounds/pain/9.wav', './sounds/pain/10.wav', './sounds/pain/11.wav']
+
+ZOMBIE_HIT_SOUNDS = ['./sounds/splat-15.wav']
 WEAPON_SOUNDS = {'pistol': ['./sounds/barreta.wav']}
                  #'shotgun': ['./sounds/shotgun.wav']}
-EFFECTS_SOUNDS = {'level_start': './sounds/level_start.wav',
-                  'health_up': 'health_pack.wav',
-                  'gun_pickup': 'gun_pickup.wav'}
+EFFECTS_SOUNDS = {'level_start': './sounds/level_start.wav'}

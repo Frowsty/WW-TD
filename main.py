@@ -115,9 +115,8 @@ for img in settings.MUZZLE_FLASHES:
 
 # Initialize our player
 
-player = entities.Player(ammo_font, all_Sprite_Group, gun_flashes, [300, 300])
-player_Sprite_Group.add(player)
-all_Sprite_Group.add(player)
+player = entities.Player(ammo_font, all_Sprite_Group, player_Sprite_Group, gun_flashes, [300, 300])
+
 
 map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group)
 map_Sprite_Group.add(map)
@@ -140,7 +139,7 @@ def load_map():
 
 def start_town(walls_group, enemies):
     map, map_img, map_rect = load_map()
-
+    map.rect = map_rect
     encounter = True
 
 
@@ -182,11 +181,15 @@ def start_town(walls_group, enemies):
                     bullet.hit_target = False
 
         camcam.update(player)
+        camcam.apply(player)
 
-        screen.blit(map_img, (0, 0))
+        screen.blit(map_img, camcam.apply(map))
 
-        for sprite in player_Sprite_Group:
+        for sprite in all_Sprite_Group:
+            if isinstance(sprite, entities.Enemies):
+                sprite.draw_health()
             screen.blit(sprite.image, camcam.apply(sprite))
+
 
         player.draw(screen)
 

@@ -2,6 +2,11 @@ import pygame
 import os
 import math
 from time import sleep
+from random import uniform, choice, randint, random
+import settings
+from settings import *
+from tilemap import collide_hit_rect
+
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -33,6 +38,28 @@ def get_image(path):
     return image
 
 
+vec = pygame.math.Vector2
+
+def collide_with_walls(sprite, group, dir):
+    if dir == 'x':
+        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
+        if hits:
+            if hits[0].rect.centerx > sprite.hit_rect.centerx:
+                sprite.pos.x = hits[0].rect.left - sprite.hit_rect.width / 2
+            if hits[0].rect.centerx < sprite.hit_rect.centerx:
+                sprite.pos.x = hits[0].rect.right + sprite.hit_rect.width / 2
+            sprite.vel.x = 0
+            sprite.hit_rect.centerx = sprite.pos.x
+    if dir == 'y':
+        hits = pygame.sprite.spritecollide(sprite, group, False, collide_hit_rect)
+        if hits:
+            if hits[0].rect.centery > sprite.hit_rect.centery:
+                sprite.pos.y = hits[0].rect.top - sprite.hit_rect.height / 2
+            if hits[0].rect.centery < sprite.hit_rect.centery:
+                sprite.pos.y = hits[0].rect.bottom + sprite.hit_rect.height / 2
+            sprite.vel.y = 0
+            sprite.hit_rect.centery = sprite.pos.y
+
 # player_frames = [pygame.transform.scale(pygame.image.load("character_frames/frame_1.png"), (200, 200)),
 #                  pygame.transform.scale(pygame.image.load("character_frames/frame_2.png"), (200, 200)),
 #                  pygame.transform.scale(pygame.image.load("character_frames/frame_3.png"), (200, 200)),
@@ -43,9 +70,11 @@ def get_image(path):
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, font, all_sprites, gun_flashes, auto_reload = False,position=[0, 0]):
+    def __init__(self, font, all_sprites, player_Sprite_Group, gun_flashes, auto_reload = False,position=[0, 0]):
         self.all_sprites = all_sprites
         self.gun_flashes = gun_flashes
+        self.player_Sprite_Group = player_Sprite_Group
+        self.groups = self.all_sprites, self.player_Sprite_Group
         pygame.sprite.Sprite.__init__(self)
         self.auto_reload = auto_reload
         self.font = font
@@ -55,6 +84,7 @@ class Player(pygame.sprite.Sprite):
         self.frames = self.load_frames()
         self.image = self.player_frames[0]
         self.rect = self.image.get_rect()
+        self.Rect = self.rect
         self.reverse_frames = False
         self.player_facing = 0
         self.velocity = 20
@@ -68,6 +98,22 @@ class Player(pygame.sprite.Sprite):
         self.dead = False
         self.should_knockback = False
         self.knockback = 0
+        self.weapon = 'pistol'
+
+        # Sound loading
+        pygame.mixer.music.load(settings.BG_MUSIC)
+        self.effects_sounds = {}
+        for type in settings.EFFECTS_SOUNDS:
+            self.effects_sounds[type] = pygame.mixer.Sound(settings.EFFECTS_SOUNDS[type])
+        self.weapon_sounds = {}
+        for weapon in settings.WEAPON_SOUNDS:
+            self.weapon_sounds[weapon] = []
+            for snd in settings.WEAPON_SOUNDS[weapon]:
+                s = pygame.mixer.Sound(snd)
+                s.set_volume(0.3)
+                self.weapon_sounds[weapon].append(s)
+
+
 
     def load_frames(self):
         self.player_frames.append(get_image("character_frames/character_main.png"))
@@ -138,6 +184,11 @@ class Player(pygame.sprite.Sprite):
                     -1].y <= 0:
                     for bullet in self.bullets:
                         if (pygame.time.get_ticks() - self.reload_tick) >= 250:
+                            s = pygame.mixer.Sound('./sounds/shells.wav')
+                            s.set_volume(0.3)
+                            s.play()
+
+
                             self.bullets.pop(self.bullets.index(bullet))
                             self.walkcount = 1
                             self.reload_tick = pygame.time.get_ticks()
@@ -166,6 +217,11 @@ class Player(pygame.sprite.Sprite):
                     self.bullets.append(Projectile(round(self.rect[0] + self.player_frames[0].get_width()),
                                                    round(self.rect[1] + self.player_frames[0].get_height() / 1.6),
                                                    self.player_facing, self.all_sprites, self.gun_flashes))
+                snd = choice(self.weapon_sounds[self.weapon])
+                if snd.get_num_channels() > 2:
+                    snd.stop()
+                snd.play()
+
 
     def draw(self, screen):
 
@@ -262,12 +318,24 @@ class Enemy(pygame.sprite.Sprite):
             self.collision_check(player_pos, player_frame)
             self.clamp_movement()
 
+    def draw_health(self):
+        if self.health > 60:
+            col = settings.GREEN
+        elif self.health > 30:
+            col = settings.YELLOW
+        else:
+            col = settings.RED
+        width = int(self.rect.width * self.health / settings.MOB_HEALTH)
+        self.health_bar = pygame.Rect(0, 0, width, 7)
+        if self.health < settings.MOB_HEALTH:
+            pygame.draw.rect(self.image, col, self.health_bar)
+
 
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, x, y, direction, all_sprites, gun_flashes):
         self.all_sprites = all_sprites
         self.gun_flashes = gun_flashes
-        pygame.sprite.Sprite.__init__()
+        pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.bullet = ""
@@ -336,5 +404,5 @@ class MuzzleFlash(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks()
 
     def update(self):
-        if pg.time.get_ticks() - self.spawn_time > FLASH_DURATION:
+        if pygame.time.get_ticks() - self.spawn_time > FLASH_DURATION:
             self.kill()
