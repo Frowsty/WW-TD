@@ -1,6 +1,7 @@
 import pygame
 import os
 import math
+from random import choice
 from time import sleep
 
 # Define colors
@@ -10,6 +11,7 @@ WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+DARK_RED = (150, 0, 0)
 
 YELLOW = (255, 255, 0)
 DK_GREEN = (51, 102, 0)
@@ -44,7 +46,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, position=[0,0]):
         super().__init__()
         self.cur_pos = position
-        self.walkcount = 0
+        self.reload_frame = 0
         self.player_frames = []
         self.frames = self.load_frames()
         self.reverse_frames = False
@@ -60,6 +62,9 @@ class Player(pygame.sprite.Sprite):
         self.dead = False
         self.should_knockback = False
         self.knockback = 0
+        self.damage = 0
+        self.mode = ""
+        self.max_health = 100
 
     def load_frames(self):
         self.player_frames.append(get_image("character_frames/character_main.png"))
@@ -86,6 +91,18 @@ class Player(pygame.sprite.Sprite):
             self.cur_pos[1] = 960 - self.player_frames[0].get_height() - 50
         if self.cur_pos[1] <= 50:
             self.cur_pos[1] = 50
+    
+    def update_settings(self):
+        
+        if self.mode == "EASY":
+            self.damage = 50
+            self.health = 100
+        if self.mode == "MEDIUM":
+            self.damage = 34
+            self.health = 75
+        if self.mode == "HARD":
+            self.damage = 25
+            self.health = 50
 
     def actions(self, auto_reload):
 
@@ -108,6 +125,7 @@ class Player(pygame.sprite.Sprite):
         #self.cycle_animation()
         self.clamp_movement()
 
+
         for bullet in self.bullets:
             if bullet.direction == 1 or bullet.direction == 3:
                 if bullet.x < 1280 and bullet.x > 0:
@@ -118,20 +136,20 @@ class Player(pygame.sprite.Sprite):
                     if bullet.x < 1280 and bullet.x > 0:
                         bullet.y += bullet.velocity
 
-        if pygame.key.get_pressed()[pygame.K_r] or self.reloading == True or (auto_reload == True and len(self.bullets) == 5):
+        if pygame.key.get_pressed()[pygame.K_r] or self.reloading == True or (auto_reload == True and len(self.bullets) == self.ammo):
             if len(self.bullets) != 0:   
                 self.reloading = True
 
                 if self.bullets[-1].x >= 1280 or self.bullets[-1].x <= 0 or self.bullets[-1].y >= 960 or self.bullets[-1].y <= 0:
                     for bullet in self.bullets:
-                        if (pygame.time.get_ticks() - self.reload_tick) >= 250:
+                        if (pygame.time.get_ticks() - self.reload_tick) >= 350:
                             self.bullets.pop(self.bullets.index(bullet))
-                            self.walkcount = 1
+                            self.reload_frame = 1
                             self.reload_tick = pygame.time.get_ticks()
 
                     if len(self.bullets) == 0:
                         self.reloading = False
-                        self.walkcount = 0
+                        self.reload_frame = 0
 
         if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
             self.fired_tick = pygame.time.get_ticks()
@@ -139,31 +157,44 @@ class Player(pygame.sprite.Sprite):
 
                 if self.player_facing == 0:
                     self.bullets.append(Projectile(round(self.cur_pos[0] + self.player_frames[0].get_width() / 2), 
-                                                   round(self.cur_pos[1] - 10), self.player_facing))
+                                                   round(self.cur_pos[1] - 10), self.player_facing, self.damage))
                 if self.player_facing == 1:
                     self.bullets.append(Projectile(round(self.cur_pos[0] - 10),
-                                                   round(self.cur_pos[1] + 8), self.player_facing))
+                                                   round(self.cur_pos[1] + 8), self.player_facing, self.damage))
                 if self.player_facing == 2:
                     self.bullets.append(Projectile(round(self.cur_pos[0] + 8), 
-                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() + 11), self.player_facing))
+                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() + 11), self.player_facing, self.damage))
                 if self.player_facing == 3:
                     self.bullets.append(Projectile(round(self.cur_pos[0] + self.player_frames[0].get_width()),
-                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() / 1.6), self.player_facing))
+                                                   round(self.cur_pos[1] + self.player_frames[0].get_height() / 1.6), self.player_facing, self.damage))
     
     def draw(self, screen, font):
 
+        if self.mode == "EASY":
+            self.max_health = 100
+        if self.mode == "MEDIUM":
+            self.max_health = 75
+        if self.mode == "HARD":
+            self.max_health = 50
+
         if self.health <= 0:
             self.health = 0
-
+        if self.health >= self.max_health:
+            self.health = self.max_health
+        
+        if self.ammo != 10 and len(self.bullets) > 5:
+            for i in range(5):
+                self.bullets.pop()
+        
         if self.health > 0:
             if self.player_facing == 0:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 90), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.reload_frame], 90), self.cur_pos)
             if self.player_facing == 1:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], 180), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.reload_frame], 180), self.cur_pos)
             if self.player_facing == 2:
-                screen.blit(pygame.transform.rotate(self.player_frames[self.walkcount], -90), self.cur_pos)
+                screen.blit(pygame.transform.rotate(self.player_frames[self.reload_frame], -90), self.cur_pos)
             if self.player_facing == 3:
-                screen.blit(self.player_frames[self.walkcount], self.cur_pos)
+                screen.blit(self.player_frames[self.reload_frame], self.cur_pos)
         else:
             self.dead = True
 
@@ -184,11 +215,11 @@ class Enemy(pygame.sprite.Sprite):
         super().__init__()
         self.cur_pos = position
         self.bullets = []
-        self.walkcount = 0
         self.player_frame = get_image("character_frames/enemy_knife.png")
         # self.frames = self.load_frames()
         self.health = 100
         self.speed = 20
+        self.damage = 15
         self.accelerate = pygame.math.Vector2(0, 0)
         self.hit_target_tick = pygame.time.get_ticks()
         self.hit_player = False
@@ -212,6 +243,15 @@ class Enemy(pygame.sprite.Sprite):
             self.cur_pos[1] = 960 - self.player_frame.get_height() - 50
         if self.cur_pos[1] <= 50:
             self.cur_pos[1] = 50
+
+    def update_settings(self, game_mode):
+
+        if game_mode == "EASY":
+            self.damage = 10
+        if game_mode == "MEDIUM":
+            self.damage = 15
+        if game_mode == "HARD":
+            self.damage = 25
 
     def collision_check(self, player_pos, player_frame):
         if self.cur_pos[0] >= player_pos[0] and self.cur_pos[0] <= player_pos[0] + player_frame.get_width():
@@ -238,7 +278,8 @@ class Enemy(pygame.sprite.Sprite):
             self.clamp_movement()
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, direction):
+
+    def __init__(self, x, y, direction, damage):
         super().__init__()
         self.x = x
         self.y = y
@@ -246,7 +287,7 @@ class Projectile(pygame.sprite.Sprite):
         self.direction = direction
         self.velocity = 45
         self.hit_target = False
-        self.damage = 40
+        self.damage = damage
 
     def collision_check(self, enemy_pos, enemy_frame):
         if self.x >= enemy_pos[0] and self.x <= enemy_pos[0] + enemy_frame.get_width():
@@ -275,3 +316,47 @@ class Projectile(pygame.sprite.Sprite):
                 self.velocity = 45
                 if self.x < 1280 and self.x > 0:
                     screen.blit(pygame.transform.rotate(self.bullet, -90), (self.x, self.y))
+
+class PowerUp(pygame.sprite.Sprite):
+
+    def __init__(self, screen, attribute, pos, called_tick):
+        super().__init__()
+        self.pos = pos
+        self.attribute = attribute
+        self.screen = screen
+        self.colors = [RED, GREEN, BLUE, PURPLE, ORANGE]
+        self.activate = False
+        self.activate_attrib = ""
+        self.called_tick = called_tick
+        self.draw = True
+        self.clicked_tick = 0
+
+    def run(self, shell_img):
+        if self.draw == True:
+            self.pos[1] += 10
+            if self.attribute == 1:
+                pygame.draw.circle(self.screen, choice(self.colors), (self.pos[0], self.pos[1]), 25)
+                self.screen.blit(shell_img, (self.pos[0] - 35, self.pos[1] - 20))
+                self.screen.blit(shell_img, (self.pos[0] - 25, self.pos[1] - 20))
+                self.screen.blit(shell_img, (self.pos[0] - 15, self.pos[1] - 20))
+            
+            if self.attribute == 2:
+                pygame.draw.circle(self.screen, choice(self.colors), (self.pos[0], self.pos[1]), 25)
+                self.screen.blit(pygame.transform.scale(shell_img, (60, 60)), (self.pos[0] - 33, self.pos[1] - 30))
+            
+            if self.attribute == 3:
+                pygame.draw.circle(self.screen, choice(self.colors), (self.pos[0], self.pos[1]), 25)
+                pygame.draw.line(self.screen, DARK_RED, (self.pos[0] - 15, self.pos[1]), (self.pos[0] + 15, self.pos[1]), 5)
+                pygame.draw.line(self.screen, DARK_RED, (self.pos[0], self.pos[1] - 15), (self.pos[0], self.pos[1] + 15), 5)
+
+    def return_attribute(self, mouse_x, mouse_y):
+        if mouse_x < self.pos[0] + 25 and mouse_x > self.pos[0] - 25:
+            if mouse_y < self.pos[1] + 25 and mouse_y > self.pos[1] - 25:
+                if pygame.mouse.get_pressed()[0] == True:
+                    if self.attribute == 1:
+                        self.activate_attrib = "increase ammo"
+                    elif self.attribute == 2:
+                        self.activate_attrib = "increase damage"
+                    elif self.attribute == 3:
+                        self.activate_attrib = "increase health"
+                    self.clicked_tick = pygame.time.get_ticks()

@@ -13,7 +13,7 @@ MENU_MAIN = (232, 190, 122)
 MENU_OUTLN = (178, 136, 69)
 
 story_line = ["You're a lost cowboy in", "the middle of nowhere. ", "Your objective is to", "follow the path to the end ",
-              "while completing tasks", "and fighting to survive ", "the journey."]
+              "while completing tasks", "and fight to survive ", "the journey."]
 
 controls_text = ["W = Walk Up", "S = Walk Down", "A = Walk Left", "D = Walk Right", "R = Reload", "Space = Shoot"]
 
@@ -28,6 +28,13 @@ menu_start = fp.Button(GREEN, 260, 180, 250, 50, "Start game")
 menu_howto = fp.Button(BLUE, 260, 250, 250, 50, "How to play")
 menu_quit = fp.Button(RED, 260, 320, 250, 50, "Quit!")
 menu_back = fp.Button(WHITE, 10, 10, 50, 20, "<<<")
+
+# Initialize Settings menu objects
+settings_box = fp.GroupBox(1280/2 - 150, 960/2 - 300, 300, 500, "Settings")
+settings_powerup_toggle = fp.Checkbox(RED, GREEN, 110, 10, 75, 1, "Allow Powerups: ", False)
+settings_easy = fp.Button(GREEN, 260, 250, 250, 50, "Easy")
+settings_medium = fp.Button(BLUE, 260, 250, 250, 50, "Medium")
+settings_hard = fp.Button(RED, 260, 250, 250, 50, "Hard")
 
 # InGame interface
 enable_sound = fp.Checkbox(RED, GREEN, 110, 10, 50, 1, "Mute Sound:", False)
@@ -52,6 +59,18 @@ def update_mm():
 
     menu_quit.x = menu_box.x + 25
     menu_quit.y = menu_box.y + 350
+
+    settings_powerup_toggle.x = menu_box.x + 200
+    settings_powerup_toggle.y = menu_box.y + 150
+
+    settings_easy.x = menu_box.x + 25
+    settings_easy.y = menu_box.y + 225
+
+    settings_medium.x = menu_box.x + 25
+    settings_medium.y = menu_box.y + 325
+
+    settings_hard.x = menu_box.x + 25
+    settings_hard.y = menu_box.y + 425
 
 def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
     global story_line, controls_text
@@ -93,7 +112,7 @@ def howto_page(screen, mouse_x, mouse_y, story, ctrls, font):
         else:
             howto_ctrls.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
-def draw_mm(screen, mouse_x, mouse_y, menu_bg):
+def draw_mm(screen, mouse_x, mouse_y, menu_bg, menu_input):
 
     screen.blit(menu_bg, (0,0))
     # Draw main menu components
@@ -101,6 +120,7 @@ def draw_mm(screen, mouse_x, mouse_y, menu_bg):
     menu_start.draw(screen)
     menu_howto.draw(screen)
     menu_quit.draw(screen)
+
 
 def draw_howto(screen, mouse_x, mouse_y, font, did_game_start, menu_bg):
     global show_story, show_ctrls
@@ -119,17 +139,33 @@ def draw_howto(screen, mouse_x, mouse_y, font, did_game_start, menu_bg):
 
     if did_game_start == False:
         howto_page(screen, mouse_x, mouse_y, show_story, show_ctrls, font)
+    
+def draw_settings(screen, mouse_x, mouse_y, menu_bg):
 
-def menu_system(mouse_x, mouse_y, did_game_start):
+    screen.blit(menu_bg, (0,0))
+    menu_back.draw(screen)
+    settings_box.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
+    settings_powerup_toggle.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+    settings_easy.draw(screen)
+    settings_medium.draw(screen)
+    settings_hard.draw(screen)
+
+def menu_system(mouse_x, mouse_y, settings_menu):
     global show_ctrls, show_story
 
-    if menu_quit.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+    if menu_quit.clicked(mouse_x, mouse_y) == True and settings_menu == False:
         return "QUIT"
-    if menu_start.clicked(mouse_x, mouse_y) == True and did_game_start == False:
-        return "START"
-    if menu_howto.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+    if menu_start.clicked(mouse_x, mouse_y) == True and settings_menu == False:
+        return "SETTINGS"
+    if menu_howto.clicked(mouse_x, mouse_y) == True and settings_menu == False:
         return "HOWTO"
-    if menu_back.clicked(mouse_x, mouse_y) == True and did_game_start == False:
+    if settings_easy.clicked(mouse_x, mouse_y) == True and settings_menu == True:
+        return "START_EASY"
+    if settings_medium.clicked(mouse_x, mouse_y) == True and settings_menu == True:
+        return "START_MEDIUM"
+    if settings_hard.clicked(mouse_x, mouse_y) == True and settings_menu == True:
+        return "START_HARD"
+    if menu_back.clicked(mouse_x, mouse_y) == True:
         show_ctrls = False
         howto_ctrls.height = 0
         show_story = False
@@ -137,9 +173,13 @@ def menu_system(mouse_x, mouse_y, did_game_start):
         
         return "MAIN_MENU"
 
-def draw_ammo(screen, bullets, font, shell_img):
+def draw_ammo(screen, player_ammo, bullets, font, shell_img):
     
-    ammo_text = font.render(f"{5 - len(bullets)}x", True, BLACK)
+    bullets_left = player_ammo - len(bullets)
+    if bullets_left < 0:
+        bullets_left = 0
+
+    ammo_text = font.render(f"{bullets_left}x", True, BLACK)
     screen.blit(ammo_text, (45, 920))
     screen.blit(shell_img, (-20, 870))
 
@@ -160,7 +200,7 @@ def inventory(screen, mouse_x, mouse_y):
     if player_inventory.x != 1280:
         player_inventory.draw(screen, mouse_x, mouse_y, MENU_OUTLN, MENU_MAIN, RED, 10)
 
-def ingame_interface(screen, mouse_x, mouse_y, bullets, fps_font, font, clock, shell_img):
+def ingame_interface(screen, mouse_x, mouse_y, player_ammo, bullets, fps_font, font, clock, shell_img):
     global show_inventory
 
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
@@ -169,7 +209,6 @@ def ingame_interface(screen, mouse_x, mouse_y, bullets, fps_font, font, clock, s
     toggle_inventory.draw(screen)
     fullscreen_text = font.render(f"Fullscreen: F12", True, BLACK)
     screen.blit(fullscreen_text, (450, 10))
-    
 
     if toggle_inventory.clicked(mouse_x, mouse_y):
         show_inventory = not show_inventory
@@ -183,4 +222,4 @@ def ingame_interface(screen, mouse_x, mouse_y, bullets, fps_font, font, clock, s
     inventory(screen, mouse_x, mouse_y)
 
     # Draw ammo counter
-    draw_ammo(screen, bullets, fps_font, shell_img)
+    draw_ammo(screen, player_ammo, bullets, fps_font, shell_img)
