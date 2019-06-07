@@ -189,10 +189,10 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input, fps):
                             powerup_list.pop(powerup_list.index(powerup))
 
         ui.ingame_interface(screen, mouse_x, mouse_y, player.ammo, player.bullets, ammo_font, font, clock, shell_img)
-        player.draw(screen, ammo_font)
+        player.draw(screen, ammo_font, ui.show_healthbar.get_state())
         player.actions(ui.auto_reload.get_state())
         for enemy in enemies:
-            enemy.draw(screen, player.cur_pos, player.player_frames[0], fps, player.dead)
+            enemy.draw(screen, player.cur_pos, player.player_frames[0], fps, player.dead, ui.show_healthbar.get_state())
             enemy.update_settings(player.mode)
             if enemy.hit_player == True:
                 player.health -= enemy.damage

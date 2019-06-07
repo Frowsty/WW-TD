@@ -82,6 +82,34 @@ class Player(pygame.sprite.Sprite):
     #     if self.walkcount == 0 and self.reverse_frames == True:
     #         self.reverse_frames = False
 
+    def health_bar(self, screen):
+
+        if self.health > 75:
+            self.health_color = GREEN
+        elif self.health > 45 and self.health < 75:
+            self.health_color = YELLOW
+        elif self.health > 25 and self.health < 45:
+            self.health_color = ORANGE
+        elif self.health > 0 and self.health < 25:
+            self.health_color = RED
+
+        pygame.draw.line(screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 10), 
+                        (self.cur_pos[0] + self.player_frames[0].get_width() * (self.health / 100), self.cur_pos[1] - 10), 5)
+        
+        # Healthbar outline
+        # TOP
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 14), 
+                        (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14), 2)
+        # BOTTOM
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 8), 
+                        (self.cur_pos[0] + self.player_frames[0].get_width() + 2, self.cur_pos[1] - 8), 2)
+        # LEFT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 14), 
+                        (self.cur_pos[0] - 2, self.cur_pos[1] - 8), 2)
+        # RIGHT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14), 
+                        (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 8), 2)
+
     def clamp_movement(self):
         if self.cur_pos[0] >= 1280 - self.player_frames[0].get_width() - 50:
             self.cur_pos[0] = 1280 - self.player_frames[0].get_width() - 50
@@ -151,7 +179,7 @@ class Player(pygame.sprite.Sprite):
                         self.reloading = False
                         self.reload_frame = 0
 
-        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 500:
+        if pygame.key.get_pressed()[pygame.K_SPACE] and (pygame.time.get_ticks() - self.fired_tick) >= 750 and self.reloading == False:
             self.fired_tick = pygame.time.get_ticks()
             if len(self.bullets) < self.ammo:
 
@@ -168,7 +196,7 @@ class Player(pygame.sprite.Sprite):
                     self.bullets.append(Projectile(round(self.cur_pos[0] + self.player_frames[0].get_width()),
                                                    round(self.cur_pos[1] + self.player_frames[0].get_height() / 1.6), self.player_facing, self.damage))
     
-    def draw(self, screen, font):
+    def draw(self, screen, font, show_healthbar):
 
         if self.mode == "EASY":
             self.max_health = 100
@@ -198,16 +226,8 @@ class Player(pygame.sprite.Sprite):
         else:
             self.dead = True
 
-        if self.health > 75:
-            self.health_color = GREEN
-        elif self.health > 45 and self.health < 75:
-            self.health_color = YELLOW
-        elif self.health > 25 and self.health < 45:
-            self.health_color = ORANGE
-        elif self.health > 0 and self.health < 25:
-            self.health_color = RED
-        health_text = font.render(f"HEALTH: {self.health}", True, self.health_color)
-        screen.blit(health_text, ((1280 / 2), 5))
+        if show_healthbar == True:
+            self.health_bar(screen)
 
 class Enemy(pygame.sprite.Sprite):
 
@@ -233,6 +253,35 @@ class Enemy(pygame.sprite.Sprite):
     #     self.player_frames.append(get_image("character_frames/frame4.png"))
     
     # def actions(self, player_pos):
+
+    def health_bar(self, screen):
+
+        if self.health > 75:
+            self.health_color = GREEN
+        elif self.health > 45 and self.health < 75:
+            self.health_color = YELLOW
+        elif self.health > 25 and self.health < 45:
+            self.health_color = ORANGE
+        elif self.health > 0 and self.health < 25:
+            self.health_color = RED
+
+        # The Healthbar
+        pygame.draw.line(screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 15), 
+                        (self.cur_pos[0] + self.player_frame.get_width() * (self.health / 100), self.cur_pos[1] - 15), 5)
+
+        # Healthbar outline
+        # TOP
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 18), 
+                        (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18), 2)
+        # BOTTOM
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 12), 
+                        (self.cur_pos[0] + self.player_frame.get_width() + 2, self.cur_pos[1] - 12), 2)
+        # LEFT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 18), 
+                        (self.cur_pos[0] - 2, self.cur_pos[1] - 12), 2)
+        # RIGHT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18), 
+                        (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 12), 2)
         
     def clamp_movement(self):
         if self.cur_pos[0] >= 1280 - self.player_frame.get_width() - 50:
@@ -259,7 +308,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.hit_target_tick = pygame.time.get_ticks()
                 self.hit_player = True
 
-    def draw(self, screen, player_pos, player_frame, fps, is_player_dead):
+    def draw(self, screen, player_pos, player_frame, fps, is_player_dead, show_healthbar):
         if self.health <= 0:
             self.health = 0
 
@@ -276,6 +325,9 @@ class Enemy(pygame.sprite.Sprite):
 
             self.collision_check(player_pos, player_frame)
             self.clamp_movement()
+        
+        if show_healthbar == True:
+            self.health_bar(screen)
 
 class Projectile(pygame.sprite.Sprite):
 

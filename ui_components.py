@@ -42,6 +42,7 @@ auto_reload = fp.Checkbox(RED, GREEN, 250, 10, 50, 1, "Auto Reload:", False)
 toggle_inventory = fp.Button(BROWN, 1280 - 213, 960 - 60, 210, 50, "Open Inventory")
 player_inventory = fp.GroupBox(1280, 960 - 370, 200, 300, "Inventory")
 toggle_show_fps = fp.Checkbox(RED, GREEN, 400, 10, 50, 1, "Show FPS:", False)
+show_healthbar = fp.Checkbox(RED, GREEN, 550, 10, 50, 1, "Healthbar:", False)
 
 # Howto menu objects
 howto_story_btn = fp.Button(GREEN, 200, 180, 250, 50, "Story")
@@ -206,12 +207,13 @@ def ingame_interface(screen, mouse_x, mouse_y, player_ammo, bullets, fps_font, f
     enable_sound.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     auto_reload.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
     toggle_show_fps.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
-    toggle_inventory.draw(screen)
+    show_healthbar.draw(screen, mouse_x, mouse_y, 2, text_color=BLACK)
+    # toggle_inventory.draw(screen)
     fullscreen_text = font.render(f"Fullscreen: F12", True, BLACK)
-    screen.blit(fullscreen_text, (450, 10))
+    screen.blit(fullscreen_text, (600, 12))
 
-    if toggle_inventory.clicked(mouse_x, mouse_y):
-        show_inventory = not show_inventory
+    #if toggle_inventory.clicked(mouse_x, mouse_y):
+    #    show_inventory = not show_inventory
     
     show_fps = toggle_show_fps.get_state()
 

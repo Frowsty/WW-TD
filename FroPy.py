@@ -34,6 +34,8 @@ class Button:
         self.width = width
         self.height = height
         self.text = text
+        self.clicked_tick = pygame.time.get_ticks()
+        self.was_clicked = False
 
     def draw(self, screen, edge=0, font='Arial', text_color=(0, 0, 0)):
         """Function to render our button and add a fitting text to it if text is given by the user"""
@@ -54,8 +56,12 @@ class Button:
         if mouse_x < self.x + self.width and mouse_x > self.x:
             if mouse_y < self.y + self.height and mouse_y > self.y:
                 if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    return True
+                    self.was_clicked = True
+                    self.clicked_tick = pygame.time.get_ticks()
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                return True
         return False
 
 
@@ -71,6 +77,8 @@ class Checkbox:
         self.text = text
         self.state = state
         self.style = 1
+        self.was_clicked = False
+        self.clicked_tick = pygame.time.get_ticks()
 
     def draw(self, screen, mouse_x, mouse_y, style=1, font='Arial', text_color=(0, 0, 0)):
         """Draw the instance of our checkbox with specified arguments.
@@ -145,14 +153,19 @@ class Checkbox:
             if mouse_x < self.x + self.size and mouse_x > self.x:
                 if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
                     if pygame.mouse.get_pressed()[0] == True:
-                        sleep(0.10)
-                        self.state = not self.state
+                        self.was_clicked = True
+                        self.clicked_tick = pygame.time.get_ticks()
         elif self.style == 2:
             if mouse_x < self.x + self.size / 2 and mouse_x > self.x:
                 if mouse_y < self.y + (self.size / 2) and mouse_y > self.y:
                     if pygame.mouse.get_pressed()[0] == True:
-                        sleep(0.10)
-                        self.state = not self.state
+                        self.was_clicked = True
+                        self.clicked_tick = pygame.time.get_ticks()
+        
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                self.state = not self.state
 
     def get_state(self):
         return self.state
@@ -198,8 +211,7 @@ class GroupBox:
 
         if mouse_x < self.x + self.width and mouse_x > self.x:
             if mouse_y < (self.y + text.get_height() + (self.height * 0.05)) and mouse_y > self.y:
-                if pygame.mouse.get_pressed()[0] == True and pygame.key.get_pressed()[pygame.K_RSHIFT] == True or \
-                        pygame.mouse.get_pressed()[0] == True and pygame.key.get_pressed()[pygame.K_LSHIFT] == True:
+                if pygame.mouse.get_pressed()[0] == True and pygame.key.get_pressed()[pygame.K_RSHIFT] == True or pygame.mouse.get_pressed()[0] == True and pygame.key.get_pressed()[pygame.K_LSHIFT] == True:
                     self.x = mouse_x - (self.width / 2)
                     self.y = mouse_y - (self.height * 0.1)
 
@@ -218,20 +230,27 @@ class InputBox:
         self.capture_text = False
         self.text = []
         self.text_width = 0
+        self.was_clicked = False
+        self.clicked_tick = pygame.time.get_ticks()
 
     def draw(self, screen, mouse_x, mouse_y, edge, font="Arial", placeholder_color=(75, 75, 75)):
 
         if mouse_x < self.x + self.width and mouse_x > self.x:
             if mouse_y < self.y + self.height and mouse_y > self.y:
                 if pygame.mouse.get_pressed()[0] == True:
-                    sleep(0.10)
-                    self.capture_text = not self.capture_text
+                    self.was_clicked = True
+                    self.clicked_tick = pygame.time.get_ticks()
             else:
                 if pygame.mouse.get_pressed()[0] == True:
                     self.capture_text = False
         else:
             if pygame.mouse.get_pressed()[0] == True:
                 self.capture_text = False
+        
+        if self.was_clicked == True:
+            if (pygame.time.get_ticks() - self.clicked_tick) >= 1:
+                self.was_clicked = False
+                self.capture_text = not self.capture_text
 
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height), edge)
 
