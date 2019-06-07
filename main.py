@@ -250,6 +250,8 @@ def start_town(mouse_x, mouse_y):
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
     camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
+    camera_group = pygame.sprite.GroupSingle()
+    camera_group.add(camcam)
 
 
     while encounter:

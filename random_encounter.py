@@ -17,15 +17,24 @@ def get_image(path):
     return image
 
 
+def get_image_convert_alpha(path):
+    global _image_library
+    image = _image_library.get(path)
+    if image == None:
+        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
+        image = pygame.image.load(canonicalized_path).convert_alpha()
+    return image
+
+
 class random_Encounter():
-    def __init__(self, screen, player, player_group):
+    def __init__(self, screen, player, player_group, camcam):
         self.player = player
         self.player_group = player_group
         self.screen = screen
         self.looping = True
+        self.camcam = camcam
 
-
-        self.loop(self.player_group)
+        self.loop()
 
 
 
@@ -66,15 +75,15 @@ class random_Encounter():
 
             fps = clock.tick(60) / 1000.0
 
-            self.screen.blit(self.map_img, camcam.apply(self.map))
-            camcam.update(player)
+            self.screen.blit(self.map_img, self.camcam.apply(self.map))
+            self.camcam.update(self.player)
             self.all_Sprite_Group.update()
             ui.ingame_interface(self.screen, mouse_x, mouse_y, self.player.current_ammo, ammo_font, font, clock, shell_img)
             self.player.ammo_reload_toggle(ui.auto_reload.get_state())
             # ammo_font and screen are passed in on creation
 
             for sprite in all_Sprite_Group:
-                self.screen.blit(sprite.image, camcam.apply(sprite))
+                self.screen.blit(sprite.image, self.camcam.apply(sprite))
 
             # enemy hits player
             hits = pygame.sprite.spritecollide(self.player, enemies, False, collide_hit_rect)
