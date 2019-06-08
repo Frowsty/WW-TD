@@ -9,6 +9,7 @@ from tilemap import collide_hit_rect
 import ui_components as ui
 import pytweening as tween
 from itertools import chain
+import json
 
 vec = pygame.math.Vector2
 
@@ -132,6 +133,12 @@ class Player(pygame.sprite.Sprite):
         self.sound_previous_state = False
 
         self.item_effect_current = False
+        self.muted = False
+        if self.muted == True:
+            self.reload_sound = 'silent'
+        else:
+            self.reload_sound = ''
+
 
         pygame.key.set_repeat(10,10)
         # Sound loading
@@ -216,7 +223,10 @@ class Player(pygame.sprite.Sprite):
         self.ammo_reload = state
 
     def update(self):
-
+        if self.muted == True:
+            self.reload_sound = 'silent'
+        else:
+            self.reload_sound = ''
         self.get_keys()
         self.ammo_reload_toggle(ui.auto_reload.get_state())
         if self.debug:
@@ -234,12 +244,10 @@ class Player(pygame.sprite.Sprite):
             self.reload()
 
         self.actions()
-        if ui.enable_sound.get_state() == True and self.sound_previous_state == False:
-            self.toggle_sound(0)
-            self.sound_previous_state = True
-        elif ui.enable_sound.get_state() == False and self.sound_previous_state == True:
-            self.toggle_sound(0.3)
-            self.sound_previous_state = False
+        if ui.enable_sound.get_state() == True:
+            self.muted = True
+        elif ui.enable_sound.get_state() == False:
+            self.muted = False
         else:
             pass
 
@@ -303,33 +311,19 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_r:
                     self.reload()
 
-    def toggle_sound(self, x):
-        self.weapon_sounds = {}
-        for weapon in settings.WEAPON_SOUNDS:
-            self.weapon_sounds[weapon] = []
-            for snd in settings.WEAPON_SOUNDS[weapon]:
-                s = pygame.mixer.Sound(snd)
-                s.set_volume(x)
-                self.weapon_sounds[weapon].append(s)
-        t = './sounds/shells.wav'
-        pygame.mixer.Sound(t).set_volume(x)
-        self.effects_sounds = {}
-        for type in settings.EFFECTS_SOUNDS:
-            self.effects_sounds[type] = pygame.mixer.Sound(settings.EFFECTS_SOUNDS[type])
-            self.effects_sounds[type].set_volume(x)
-
-
-
-
 
     def reload(self):
+
         if self.current_ammo < self.ammo_max:
             self.reloading = True
             while self.current_ammo != self.ammo_max:
                 if (pygame.time.get_ticks() - self.reload_tick) >= 250:
-                    t = './sounds/shells.wav'
-                    u = pygame.mixer.Sound(t)
-                    u.play()
+                    if self.reload_sound == 'silent':
+                        pass
+                    else:
+                        t = './sounds/shells.wav'
+                        u = pygame.mixer.Sound(t)
+                        u.play()
 
                     self.current_ammo += 1
                     self.walkcount = 1
@@ -364,16 +358,19 @@ class Player(pygame.sprite.Sprite):
                 self.bullets.append(Projectile(self, self.walls, self.projectile_group, self.gun_flashes,
                                                self.all_Sprite_Group, self.barrel_Offset, self.rect.center, self.dir_facing,
                                                self.damage, self.dt))
-                snd = choice(self.weapon_sounds[self.weapon])
-                if snd.get_num_channels() > 2:
-                    snd.stop()
-                snd.play()
+                if self.muted == True:
+                    pass
+                else:
+                    snd = choice(self.weapon_sounds[self.weapon])
+                    if snd.get_num_channels() > 2:
+                        snd.stop()
+                    snd.play()
                 if self.debug:
                     print("Current_ammo " + str(self.current_ammo))
                     print("Auto reload set to " + str(self.auto_reload))
                     print("auto reload box set to " + str(self.ammo_reload_toggle(ui.auto_reload.get_state())))
-            if self.current_ammo == 0 and self.auto_reload == True:
-                reload()
+        if self.current_ammo == 0 and self.auto_reload == True:
+            reload()
 
 
     def draw(self):
@@ -704,19 +701,22 @@ class food(pygame.sprite.Sprite):
             self.dir *= -1
 
 class item_pick_up(pygame.sprite.Sprite):
-    def __init__(self, x, y, all_sprites, player):
+    def __init__(self, x, y, player, pe_group):
+        self.pickup_effects = pe_group
         self.player = player
         self.x = x
         self.y = y
-        self.all_sprites = all_sprites
-        self.groups = self.all_sprites
+        self.groups = self.pickup_effects
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.img = []
         self.load_images()
+        print(len(self.img))
         self.image = self.img[0]
         self.rect = self.image.get_rect()
         self.count = 0
         self.div_count = 0
+        #life left determines how fast the images go
+        self.life_left = 4
 
     def load_images(self):
         for i in range(8):
@@ -727,8 +727,185 @@ class item_pick_up(pygame.sprite.Sprite):
         self.rect.x = self.player.rect.x
         self.rect.y = self.player.rect.y
         self.count += 1
-        if self.count % 16 == 0:
-            self.div_count = self.count % 16
-        if self.div_count == 9:
+        if self.count % self.life_left == 0:
+            self.div_count = self.count // self.life_left
+            print("div count is " + str(self.div_count))
+        if self.div_count == len(self.img) -1:
             self.kill()
+            self.player.item_effect_current = False
+            self.pickup_effects.empty
         self.image = self.img[self.div_count]
+
+
+class Text_Box():
+    def __init__(self, text_file, screen):
+
+        self.screen = screen
+        self.img = './images/text_bg.png'
+        self.image = get_image(self.img)
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.image = pygame.transform.scale(self.image, (self.width * 2, self.height * 2))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = settings.SCREEN_WIDTH //2
+        self.rect.centery = settings.SCREEN_HEIGHT //2
+
+        self.header_font = pygame.font.Font('./images/font/newsgeek.ttf', 52)
+        self.font = pygame.font.Font('./images/font/newsgeek.ttf', 22)
+        self.text_file = text_file
+
+        self.running = True
+        self.display_instructions = True
+        self.instruction_page = 1
+        self.open_text()
+        self.loop()
+
+    def open_text(self):
+        self.text_array = []
+        with open(self.text_file, 'r') as file:
+            dict = json.load(file)
+
+
+        self.title = dict['title']
+        self.page1 = dict['page1']
+        self.text_array.append(self.page1)
+        try:
+            self.page2 = dict['page2']
+            self.text_array.append(self.page2)
+        except:
+            pass
+        try:
+            self.page3 = dict['page3']
+            self.text_array.append(self.page3)
+            try:
+                self.page3_3 = dict['page3.3']
+                print(self.page3_3)
+            except:
+                print("Passing on pulling 3.3")
+                pass
+            try:
+                self.page3_2 = dict['page3.2']
+                print(self.page3_2)
+            except:
+                print("passing on pulling 3.2")
+                pass
+        except:
+            pass
+        try:
+            self.page4 = dict['page4']
+            self.text_array.append(self.page4)
+        except:
+            pass
+
+
+
+    def draw_box(self):
+        self.divisor = 12
+        self.margin_w = self.image.get_width() // self.divisor
+        self.margin_h = self.image.get_height() // self.divisor
+        self.buffer_w = (settings.SCREEN_WIDTH // 2) - (self.image.get_width() // 2)
+        self.buffer_h = (settings.SCREEN_HEIGHT//2) - (self.image.get_height()//2)
+        self.box_start_w = self.buffer_w + self.margin_w
+        self.box_start_h = self.buffer_h + self.margin_h
+        pygame.draw.rect(self.screen, (0,0,0), (self.box_start_w - 5,
+                                                self.box_start_h + 5,
+                                                self.image.get_width() - (self.margin_w) - 110,
+                                                self.image.get_height() - self.margin_h - 100))
+        pygame.draw.rect(self.screen, (197, 186, 139), (self.box_start_w,
+                                                        self.box_start_h,
+                                                        self.image.get_width() - (self.margin_w) - 100,
+                                                        self.image.get_height() - self.margin_h - 110))
+        pygame.draw.rect(self.screen, (90,68,32), (self.box_start_w,
+                                                   self.box_start_h,
+                                                   self.image.get_width() - (self.margin_w) - 100,
+                                                   self.image.get_height() - self.margin_h - 110), 2)
+
+
+    def text(self, page):
+        self.header_loc = (self.box_start_w + 10, self.box_start_h + 10)
+        self.text_y = self.header_loc[1] + (self.image.get_height()//4)
+
+        if page == 1:
+            text = self.header_font.render(self.title, True, settings.BLACK)
+            self.screen.blit(text, self.header_loc)
+            text = self.header_font.render(self.title, True, settings.DK_PURPLE)
+            self.screen.blit(text, (self.header_loc[0] + 4,self.header_loc[1] + 4))
+
+            text = self.font.render(self.page1, True, settings.BLACK)
+            self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+            self.screen.blit(text, (self.text_x, self.text_y))
+        if page == 2:
+            text = self.font.render(self.page2, True, settings.BLACK)
+            self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+            self.screen.blit(text, (self.text_x, self.text_y))
+        if page == 3:
+            text = self.font.render(self.page3, True, settings.BLACK)
+            self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+            self.screen.blit(text, (self.text_x, self.text_y))
+            try:
+                text = self.font.render(self.page3_3, True, settings.BLACK)
+                self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+                self.screen.blit(text, (self.text_x, self.text_y + 50))
+            except:
+                pass
+            try:
+                text = self.font.render(self.page3_2, True, settings.BLACK)
+                self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+                self.3_2_y = (settings.SCREEN_HEIGHT//2) + (self.image.get_height() // 2) - 50
+                self.screen.blit(text, (self.text.x, self.3_2_y))
+            except:
+                pass
+        if page == 4:
+            text = self.font.render(self.page4, True, settings.BLACK)
+            self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width // 2
+            self.screen.blit(text, self.header_loc)
+
+    def fade_out(self):
+        fade = pygame.Surface((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
+        fade.fill((0, 0, 0))
+        for alpha in range(0, 300):
+            fade.set_alpha(alpha)
+            redrawWindow()
+            self.screen.blit(fade, (0, 0))
+            pygame.display.flip()
+            pygame.time.delay(10)
+
+    def fade_in(self):
+        fade = pygame.Surface((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
+        fade.fill((0, 0, 0))
+        for alpha in range(300, 0):
+            fade.set_alpha(alpha)
+            redrawWindow()
+            self.screen.blit(fade, (0, 0))
+            pygame.display.flip()
+            pygame.time.delay(10)
+
+    def loop(self):
+        print("text loop")
+        self.fade_out
+        while self.running and self.display_instructions:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.instruction_page == len(self.text_array):
+                        pass
+                    else:
+                        self.instruction_page += 1
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.display_instructions = False
+
+            self.screen.fill(settings.BLACK)
+            self.screen.blit(self.image, self.rect)
+            self.draw_box()
+            self.text(self.instruction_page)
+
+
+            clock.tick(60)
+
+            # Go ahead and update the screen with what we've drawn.
+            pygame.display.flip()
+        self.fade_in
+
+

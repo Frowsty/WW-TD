@@ -37,6 +37,7 @@ walls_Group = pygame.sprite.Group()
 projectile_Group = pygame.sprite.Group()
 objective_Group = pygame.sprite.Group()
 item_Group = pygame.sprite.Group()
+pickup_Effect_Group = pygame.sprite.Group()
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -182,7 +183,9 @@ def load_map():
 
 
 def start_town(mouse_x, mouse_y):
+
     global walls_Group, enemey_Sprite_Group, powerup_tick, previous_state, dt
+
     enemies = enemy_Sprite_Group
 
     tile_of_map, map_img, map_rect = load_map()
@@ -276,6 +279,7 @@ def start_town(mouse_x, mouse_y):
 
 
     player.in_camera(camcam)
+    instructions = entities.Text_Box('./text/opening_scene.json', screen)
     while encounter:
         screen.fill((0, 0, 0))
         events = pygame.event.get()
@@ -286,6 +290,7 @@ def start_town(mouse_x, mouse_y):
         camcam.update(player)
         player.pass_events(events)
         all_Sprite_Group.update()
+        pickup_Effect_Group.update()
 
         for sprite in enemy_Sprite_Group:
             sprite.update()
@@ -297,6 +302,12 @@ def start_town(mouse_x, mouse_y):
 
         #ammo_font and screen are passed in on creation
 
+
+        player.draw()
+        for sprite in enemy_Sprite_Group:
+            screen.blit(sprite.image, camcam.apply(sprite))
+            if ui.show_healthbar.get_state():
+                sprite.health_bar()
         for sprite in all_Sprite_Group:
             screen.blit(sprite.image, camcam.apply(sprite))
             try:
@@ -304,11 +315,10 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
-        player.draw()
-        for sprite in enemy_Sprite_Group:
+
+        for sprite in pickup_Effect_Group:
+            print(sprite.image)
             screen.blit(sprite.image, camcam.apply(sprite))
-            if ui.show_healthbar.get_state():
-                sprite.health_bar()
         ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
 
 
@@ -334,7 +344,7 @@ def start_town(mouse_x, mouse_y):
         for hit in hits:
             counter.counter_adj(1)
             if not player.item_effect_current:
-                item_effect = entities.item_pick_up(player.rect.x, player.rect.y, all_Sprite_Group, player)
+                item_effect = entities.item_pick_up(player.rect.x, player.rect.y, player, pickup_Effect_Group)
                 player.item_effect_current = True
             hit.kill()
 

@@ -150,7 +150,7 @@ class Scenario1():
         self.ammo_font = pygame.font.SysFont("Arial", 30)
         self.clock = pygame.time.Clock()
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
-
+        self.player.reload('silent')
         #load map
         self.load_map()
 
@@ -314,7 +314,158 @@ class Scenario2():
         self.ammo_font = pygame.font.SysFont("Arial", 30)
         self.clock = pygame.time.Clock()
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
+        self.player.reload('silent')
+        #load map
+        self.load_map()
 
+    def load_map(self):
+        #setting up the map
+        self.camcam = camera.Camera(self.map.width, self.map.height)
+        self.player.in_camera(self.camcam)
+
+
+        for tile_object in self.map.tmxdata.objects:
+            obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
+                                             tile_object.y + tile_object.height / 2)
+            if tile_object.name == 'player':
+                self.player.move_rect(obj_center.x, obj_center.y)
+            if tile_object.name == 'food':
+                self.max_num_items += 1
+            if tile_object.name == 'map':
+                entities.Objective(tile_object.x, tile_object.y,
+                                   tile_object.width, tile_object.height, self.objective_group)
+            if tile_object.name == 'wall':
+                entities.Obstacle(tile_object.x, tile_object.y,
+                                  tile_object.width, tile_object.height, self.walls)
+        if self.max_num_items > 1:
+            self.max_num_items -= 1
+        else:
+            self.max_num_items = 1
+        self.num_of_items = random.randint(1, self.max_num_items)
+        self.counter = entities.Counter(self.num_of_items, self.all_Sprite_Group)
+        for tile_object in self.map.tmxdata.objects:
+            obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
+                                             tile_object.y + tile_object.height / 2)
+            if self.num_of_items == 0:
+                break
+            else:
+                self.num_of_items -= 1
+                if tile_object.name == 'food':
+                    entities.food(obj_center.x, obj_center.y, self.enemies, self.screen, self.player, self.walls,
+                                   self.dt,
+                                   self.camcam, self.all_Sprite_Group, self.counter, self.player.item_group)
+
+            hits = pygame.sprite.spritecollide(self.player, self.objective_group, False, collide_hit_rect)
+            if hits:
+                if len(self.enemies) < 1:
+                    break
+
+        pygame.event.clear()
+        self.player.vel = pygame.math.Vector2(0, 0)
+
+        #start the loop
+        self.loop()
+
+    def loop(self):
+        while self.encounter:
+
+            self.screen.fill((0, 0, 0))
+            self.mouse_x, self.mouse_y = pygame.mouse.get_pos()
+            # updates and keyinput
+            events = pygame.event.get()
+            self.player.pass_events(events)
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_j:
+                    self.draw_debug = not self.draw_debug
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_l:
+                    print(self.num_of_items)
+
+            for sprite in self.all_Sprite_Group:
+                self.camcam.update(sprite)
+                sprite.update()
+
+
+            self.camcam.update(self.player)
+
+
+            self.player.ammo_reload_toggle(ui.auto_reload.get_state())
+
+            self.draw()
+
+
+            # collision detection
+            # enemy hits player
+            hits = pygame.sprite.spritecollide(self.player, self.player.item_group, False, collide_hit_rect)
+            for hit in hits:
+                self.counter.adj(1)
+                hit.kill()
+
+
+
+
+            hits = pygame.sprite.spritecollide(self.player, self.objective_group, False, collide_hit_rect)
+            if hits:
+                if len(self.player.item_group) < 1:
+                    break
+
+            pygame.display.flip()
+            if self.draw_debug:
+                print("flipping the display")
+
+            pygame.time.Clock().tick(60)
+
+    def draw(self):
+        # draw
+        self.screen.blit(self.map_img, self.camcam.apply(self.map))
+        ui.ingame_interface(self.screen, self.mouse_x, self.mouse_y, self.player.current_ammo,
+                            self.ammo_font, self.font, self.clock, self.shell_img)
+
+        for sprite in self.all_Sprite_Group:
+            self.screen.blit(sprite.image, self.camcam.apply(sprite))
+            try:
+                if ui.show_healthbar.get_state():
+                    sprite.health_bar(self.camcam)
+            except:
+                pass
+        self.player.draw()
+        for sprite in self.player.item_group:
+            self.screen.blit(sprite.image, self.camcam.apply(sprite))
+
+
+        if self.draw_debug:
+            for wall in self.walls:
+                pygame.draw.rect(self.screen, settings.PURPLE, self.camcam.apply_rect(wall.rect), 2)
+
+
+class Scenario2():
+    def __init__(self, map, map_img, player, objective_group, walls, all_sprite_group, enemies, projectile,
+                 screen, dt, player_group):
+        #passed through variables
+        print("Collect the items")
+        self.player_group = player_group
+        self.objective_group = objective_group
+        self.projectile_group = projectile
+        self.walls = walls
+        self.all_Sprite_Group = all_sprite_group
+        self.enemies = enemies
+        self.map = map
+        self.map_img = map_img
+        self.map_rect = self.map_img.get_rect()
+        self.map.rect = self.map_rect
+        self.player = player
+        self.screen = screen
+        self.dt = dt
+
+        #class variables
+        self.draw_debug = False
+        self.max_num_items = 1
+        self.encounter = True
+        self.font = pygame.font.SysFont("Arial", 20)
+        self.big_font = pygame.font.SysFont("Arial", 60)
+        self.ammo_font = pygame.font.SysFont("Arial", 30)
+        self.clock = pygame.time.Clock()
+        self.shell_img = get_image_convert_alpha("pictures/shell.png")
+        self.player.reload('silent')
         #load map
         self.load_map()
 
