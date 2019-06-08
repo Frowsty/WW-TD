@@ -42,7 +42,13 @@ class random_Encounter():
         self.projectile_group = projectile_group
         self.objective_group = objective_group
         self.walls = walls
+        self.draw_debug = False
+        for wall in self.walls:
+            wall.move(-1000, -1000)
+            del wall
         self.loop()
+
+
 
 
 
@@ -89,25 +95,36 @@ class random_Encounter():
 
         self.encounter = True
         self.camcam = camera.Camera(self.map.width, self.map.height)
+        pygame.event.clear()
 
         while self.encounter:
-            self.screen.fill((0, 0, 0))
-            pygame.event.pump()
+            #updates and keyinput
+            events = pygame.event.get()
+
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            keyboard_input = pygame.key.get_pressed()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_h:
+                        self.draw_debug = not self.draw_debug
 
             fps = clock.tick(60) / 1000.0
-
-            self.screen.blit(self.map_img, self.camcam.apply(self.map))
-            self.camcam.update(self.player)
             self.all_Sprite_Group.update()
+            self.camcam.update(self.player)
+            #draw
+            self.screen.fill((0, 0, 0))
+            self.screen.blit(self.map_img, self.camcam.apply(self.map))
             ui.ingame_interface(self.screen, mouse_x, mouse_y, self.player.current_ammo, ammo_font, font, clock, shell_img)
             self.player.ammo_reload_toggle(ui.auto_reload.get_state())
-            # ammo_font and screen are passed in on creation
-
             for sprite in self.all_Sprite_Group:
                 self.screen.blit(sprite.image, self.camcam.apply(sprite))
+            for sprite in self.enemies:
+                self.screen.blit(sprite.image, self.camcam.apply(sprite))
+            if self.draw_debug:
+                for wall in self.walls:
+                    pygame.draw.rect(self.screen, settings.PURPLE, self.camcam.apply_rect(wall.rect), 2)
 
+
+            #collision detection
             # enemy hits player
             hits = pygame.sprite.spritecollide(self.player, self.enemies, False, collide_hit_rect)
             for hit in hits:
@@ -129,6 +146,8 @@ class random_Encounter():
             if hits:
                 if len(self.enemies) < 1:
                     break
+
+
 
             pygame.display.flip()
             pygame.time.Clock().tick(60)

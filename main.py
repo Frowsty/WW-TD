@@ -257,11 +257,15 @@ def start_town(mouse_x, mouse_y):
 
         fps = clock.tick(60) / 1000.0
 
-        screen.blit(map_img, camcam.apply(tile_of_map))
+
         camcam.update(player)
         all_Sprite_Group.update()
-        ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
         player.ammo_reload_toggle(ui.auto_reload.get_state())
+
+
+        screen.blit(map_img, camcam.apply(tile_of_map))
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
+
         #ammo_font and screen are passed in on creation
 
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="8" nextobjectid="31">
+<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="8" nextobjectid="36">
  <tileset firstgid="1" source="temp.tsx"/>
  <tileset firstgid="253" name="try2" tilewidth="64" tileheight="64" tilecount="49" columns="7">
   <image source="try2.png" width="500" height="500"/>
@@ -101,22 +101,22 @@
 </data>
  </layer>
  <objectgroup id="3" name="Object Layer 1">
-  <object id="20" name="enemy" type="enemy" x="77" y="185">
+  <object id="20" name="enemy" type="enemy" x="181" y="349">
    <point/>
   </object>
-  <object id="21" name="enemy" type="enemy" x="69" y="295">
+  <object id="21" name="enemy" type="enemy" x="173" y="459">
    <point/>
   </object>
-  <object id="22" name="enemy" type="enemy" x="103" y="451">
+  <object id="22" name="enemy" type="enemy" x="207" y="615">
    <point/>
   </object>
-  <object id="23" name="enemy" type="enemy" x="74" y="621">
+  <object id="23" name="enemy" type="enemy" x="178" y="785">
    <point/>
   </object>
   <object id="24" name="enemy" type="enemy" x="328" y="707">
    <point/>
   </object>
-  <object id="25" name="enemy" type="enemy" x="129" y="81">
+  <object id="25" name="enemy" type="enemy" x="233" y="245">
    <point/>
   </object>
   <object id="26" name="enemy" type="enemy" x="1489" y="1044">
@@ -125,9 +125,13 @@
   <object id="27" name="enemy" type="enemy" x="2098" y="299">
    <point/>
   </object>
-  <object id="28" name="player" type="player" x="1218" y="340">
+  <object id="28" name="player" type="player" x="1438" y="618">
    <point/>
   </object>
   <object id="29" name="map" type="map" x="790.667" y="247.333" width="190.333" height="79.6667"/>
+  <object id="31" name="wall" type="wall" x="2" y="-2" width="58" height="1270"/>
+  <object id="33" name="wall" type="wall" x="2177" y="13" width="58" height="1270"/>
+  <object id="34" name="wall" type="wall" x="7" y="1213" width="2228" height="66"/>
+  <object id="35" name="wall" type="wall" x="2" y="3" width="2228" height="66"/>
  </objectgroup>
 </map>

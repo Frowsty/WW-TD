@@ -494,6 +494,12 @@ class Obstacle(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+    def move(self, x, y):
+        self.x = x
+        self.y = y
+        self.rect.x = self.x
+        self.rect.y = self.y
+
 
 
 class Objective(pygame.sprite.Sprite):
