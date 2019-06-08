@@ -36,7 +36,7 @@ enemy_Sprite_Group = pygame.sprite.Group()
 walls_Group = pygame.sprite.Group()
 projectile_Group = pygame.sprite.Group()
 objective_Group = pygame.sprite.Group()
-
+item_Group = pygame.sprite.Group()
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -133,7 +133,7 @@ dt = clock.tick(60) / 1000.0
 
 # Initialize our player
 #passing in groups to player instance for inheritence
-player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprite_Group, player_Sprite_Group, gun_flashes, screen, False, -10, -10)
+player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprite_Group, player_Sprite_Group, item_Group, gun_flashes, screen, False, -10, -10)
 
 #removed enemies from manually being placed on board, now enemies spawn on markers in tile maps from the maplogic
 
@@ -245,6 +245,9 @@ def start_town(mouse_x, mouse_y):
                     powerup_list.pop(powerup_list.index(powerup))
 
     camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
+    num_of_items = 0
+
+
     for tile_object in tile_of_map.tmxdata.objects:
         obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
                          tile_object.y + tile_object.height / 2)
@@ -254,11 +257,25 @@ def start_town(mouse_x, mouse_y):
             entities.Objective(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, objective_Group)
         if tile_object.name == 'enemy':
-            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group , screen, player, walls_Group, dt, camcam, all_Sprite_Group)
+            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group , screen, player, walls_Group, dt, camcam, all_Sprite_Group, counter = False)
         if tile_object.name == 'wall':
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
+        if tile_object.name == 'food':
+            num_of_items +=1
+    counter = entities.Counter(num_of_items, all_Sprite_Group)
+    for tile_object in tile_of_map.tmxdata.objects:
+        obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
+                                         tile_object.y + tile_object.height / 2)
 
+        if tile_object.name == 'food':
+            entities.food(obj_center.x, obj_center.y, enemy_Sprite_Group, screen, player, walls_Group,
+                          dt, camcam, all_Sprite_Group, counter, player.item_group)
+
+
+
+
+    player.in_camera(camcam)
     while encounter:
         screen.fill((0, 0, 0))
         events = pygame.event.get()
@@ -276,7 +293,7 @@ def start_town(mouse_x, mouse_y):
 
 
         screen.blit(map_img, camcam.apply(tile_of_map))
-        ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
+
 
         #ammo_font and screen are passed in on creation
 
@@ -287,11 +304,12 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
+        player.draw()
         for sprite in enemy_Sprite_Group:
             screen.blit(sprite.image, camcam.apply(sprite))
             if ui.show_healthbar.get_state():
                 sprite.health_bar()
-
+        ui.ingame_interface(screen, mouse_x, mouse_y, player.current_ammo, ammo_font, font, clock, shell_img)
 
 
 
@@ -312,6 +330,13 @@ def start_town(mouse_x, mouse_y):
             for bullet in hits[enemy]:
                 enemy.health_hit(bullet.damage)
             enemy.vel = vec(0,0)
+        hits = pygame.sprite.spritecollide(player, player.item_group, False, collide_hit_rect)
+        for hit in hits:
+            counter.counter_adj(1)
+            if not player.item_effect_current:
+                item_effect = entities.item_pick_up(player.rect.x, player.rect.y, all_Sprite_Group, player)
+                player.item_effect_current = True
+            hit.kill()
 
         hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)
         if hits:
@@ -383,14 +408,13 @@ def main():
     running = True
     while running:
         events = pygame.event.get()
-        player.pass_events(events)
         for event in events:
             if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
                 running = False
                 quit()
             if pygame.key.get_pressed()[pygame.K_F12]:
                 fullscreen = toggle_fullscreen(fullscreen)
-
+        player.pass_events(events)
 
 
         mouse_x, mouse_y = pygame.mouse.get_pos()

@@ -100,11 +100,37 @@ LIGHT_MASK = "./images/light_350_soft.png"
 
 #todo add items
 # Items
-ITEM_IMAGES = {'health': 'health_pack.png',
-               'shotgun': 'obj_shotgun.png'}
+
+#ITEM_IMAGES = {'health': 'health_pack.png',
+#               'shotgun': 'obj_shotgun.png'}
+
+ITEM_IMAGES = {'pepper': './images/food/1.png', 'candy': './images/food/2.png', 'jello': './images/food/3.png',
+               'cake': './images/food/4.png', 'blue potion': './images/food/5.png',
+               'orange potion': './images/food/6.png', 'green potion': './images/food/7.png',
+               'purple potion': './images/food/8.png', 'red potion': './images/food/9.png',
+               'orange ball': './images/food/10.png',
+                'blue ball': './images/food/11.png',
+                'purple ball': './images/food/12.png',
+                'green ball': './images/food/13.png', 'red ball': './images/food/14.png',
+                'half of a pear': './images/food/15.png', 'half an apple': './images/food/16.png',
+                'half of an orange': './images/food/17.png', 'half a tomato': './images/food/18.png',
+                'sliced pear': './images/food/19.png', 'sliced apple': './images/food/20.png',
+                'sliced orange': './images/food/21.png', 'sliced tomato': './images/food/22.png',
+                'pear': './images/food/23.png', 'apple': './images/food/24.png',
+                'tomato': './images/food/25.png', 'orange': './images/food/26.png',
+                'carrot': './images/food/27.png', 'half a carrot': './images/food/28.png',
+                'peeled bannana': './images/food/29.png', 'bannana': './images/food/30.png',
+                'grapes': './images/food/31.png', 'cherry': './images/food/32.png',
+                'lemon': './images/food/33.png', 'peach': './images/food/34.png',
+                'raddish': './images/food/35.png'}
+
+
+CARDS =  {'wheel': './images/cards/broken_wheel.png'}
+V_EFFECTS = {'item_pickup': './images/effects/tile00'}
+
 HEALTH_PACK_AMOUNT = 20
-BOB_RANGE = 10
-BOB_SPEED = 0.3
+BOB_RANGE = 32
+BOB_SPEED = 0.6
 
 #todo change sounds
 # Sounds

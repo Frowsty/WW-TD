@@ -10,6 +10,8 @@ import ui_components as ui
 import pytweening as tween
 from itertools import chain
 
+vec = pygame.math.Vector2
+
 # Define colors
 BLACK = (0, 0, 0)
 GREY = (35, 35, 35)
@@ -81,7 +83,8 @@ def collide_with_walls(sprite, group, dir):
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, dt, font, walls, projectile_Group, all_sprites, player_Sprite_Group, gun_flashes, screen, auto_reload, x, y):
+    def __init__(self, dt, font, walls, projectile_Group, all_sprites, player_Sprite_Group, item_group, gun_flashes, screen, auto_reload, x, y):
+        self.item_group = item_group
         self.walls = walls
         self.dt = dt
         self.projectile_group = projectile_Group
@@ -104,8 +107,6 @@ class Player(pygame.sprite.Sprite):
         self.reverse_frames = False
         self.ammo_max = 5
         self.current_ammo = 5
-        self.fired_tick = pygame.time.get_ticks()
-        self.reload_tick = pygame.time.get_ticks()
         self.reloading = False
         self.health = 100
         self.health_color = GREEN
@@ -114,6 +115,7 @@ class Player(pygame.sprite.Sprite):
         self.knockback = 0
         self.weapon = 'pistol'
         self.clock = pygame.time.Clock()
+        self.last_hit = self.fired_tick = self.reload_tick = pygame.time.get_ticks()
         self.bullets = []
         self.barrel_Offset = (25, 10) # in pixels
         self.dir_facing = 0 #dir in radians/angle
@@ -128,7 +130,8 @@ class Player(pygame.sprite.Sprite):
         self.debug = False
         self.update_settings()
         self.sound_previous_state = False
-        self.last_hit = pygame.time.get_ticks()
+
+        self.item_effect_current = False
 
         pygame.key.set_repeat(10,10)
         # Sound loading
@@ -156,7 +159,13 @@ class Player(pygame.sprite.Sprite):
             self.damage = 25
             self.health = 50
 
-    def health_bar(self,camcam):
+    def pass_in(self, counter):
+        self.counter = counter
+
+    def in_camera(self, camcam):
+        self.camcam = camcam
+
+    def health_bar(self):
 
         if self.health > 75:
             self.health_color = GREEN
@@ -166,7 +175,8 @@ class Player(pygame.sprite.Sprite):
             self.health_color = ORANGE
         elif self.health > 0 and self.health < 25:
             self.health_color = RED
-        self.applied = camcam.apply_rect(self.rect)
+        self.applied = self.camcam.apply_rect(self.rect)
+        #print(self.applied)
 
         # The Healthbar
         pygame.draw.line(self.screen, self.health_color, (self.applied.x, self.applied.y - 15),
@@ -212,10 +222,9 @@ class Player(pygame.sprite.Sprite):
         if self.debug:
             print("...updating...")
             print("ammo_reload checked")
+
         if self.health <= 0:
             self.health = 0
-
-
         if self.health > 0:
             self.dead = False
         else:
@@ -225,7 +234,7 @@ class Player(pygame.sprite.Sprite):
             self.reload()
 
         self.actions()
-        if ui.enable_sound.get_state() == True and ssss == False:
+        if ui.enable_sound.get_state() == True and self.sound_previous_state == False:
             self.toggle_sound(0)
             self.sound_previous_state = True
         elif ui.enable_sound.get_state() == False and self.sound_previous_state == True:
@@ -233,6 +242,7 @@ class Player(pygame.sprite.Sprite):
             self.sound_previous_state = False
         else:
             pass
+
         if self.damaged:
             try:
                 self.image.fill((255, 255, 255, next(self.damage_alpha)), special_flags=pg.BLEND_RGBA_MULT)
@@ -367,6 +377,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def draw(self):
+        #print(ui.show_healthbar.get_state())
         if ui.show_healthbar.get_state():
             self.health_bar()
 
@@ -376,7 +387,8 @@ class Player(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, enemy_Sprite_Group, screen, player, walls, dt, camcam, all_sprites):
+    def __init__(self, x, y, enemy_Sprite_Group, screen, player, walls, dt, camcam, all_sprites, counter):
+        self.counter = counter
         self.all_sprites = all_sprites
         self.camcam = camcam
         self.walls = walls
@@ -465,7 +477,10 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.center = self.pos
             self.acc = vec(1, 0).rotate(-self.rot)
             self.avoid_mobs()
-            self.acc.scale_to_length(self.speed)
+            try:
+                self.acc.scale_to_length(self.speed)
+            except:
+                self.acc = vec(0,0)
             self.acc += self.vel * -1
             self.vel += self.acc * self.dt
             self.pos += (self.vel * self.dt) + (0.5 * self.acc * self.dt ** 2)
@@ -476,6 +491,10 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.center = self.hit_rect.center
         if self.health <= 0:
             #choice(self.game.zombie_hit_sounds).play()
+            if self.counter == False:
+                pass
+            else:
+                self.counter.counter_adj(1)
             self.kill()
             #self.map_img.blit(self.splat, self.pos - vec(32, 32))
 
@@ -621,3 +640,95 @@ class MuzzleFlash(pygame.sprite.Sprite):
 #todo hook the ui into the random encounters encounter
 #todo make 3 more quick levels for the random encounters
 #todo make a few more scenarios...
+class Counter(pygame.sprite.Sprite):
+    def __init__(self, count, all_sprite):
+        self.count = count
+        self.all_sprite = all_sprite
+        self.groups = self.all_sprite
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.image = get_image('./images/target_left.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = settings.SCREEN_WIDTH - 80
+        self.rect.y = settings.SCREEN_HEIGHT - 80
+        self.font = pygame.font.SysFont("Arial", 20)
+
+    def counter_adj(self, amt):
+        self.count -= amt
+
+    def text(self):
+        self.text_cont = self.font.render(f"{self.count}x", True, BLACK)
+
+    def update(self):
+        self.text()
+
+    def draw(self):
+        self.screen.blit(self.image, self.rect)
+        self.screen.blit(self.text_cont, (settings.SCREEN_WIDTH - 100, settings.SCREEN_HEIGHT - ((80-(80 - 64))//2)))
+
+class food(pygame.sprite.Sprite):
+    def __init__(self, x, y, enemies, screen, player, walls, dt, camcam, all_Sprite_Group, counter, item_group):
+        print("dropped an item")
+        self.x = x
+        self.y = y
+        self.enemies = enemies
+        self.screen = screen
+        self.player = player
+        self.walls = walls
+        self.dt = dt
+        self.camcam = camcam
+        self.all_Sprite_Group = all_Sprite_Group
+        self.counter = counter
+        self.item_Group = item_group
+
+
+        self.groups = self.all_Sprite_Group, self.item_Group
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.type, self.img = choice(list(settings.ITEM_IMAGES.items()))
+        self.image = get_image_convert_alpha(self.img)
+        self.rect = self.image.get_rect()
+        self.pos = vec(0,0)
+        self.pos.x = x
+        self.pos.y = y
+        self.rect.center = self.pos
+        self.tween = tween.easeInOutSine
+        self.step = 0
+        self.dir = 1
+
+    def update(self):
+        # bobbing motion
+        offset = settings.BOB_RANGE * (self.tween(self.step / settings.BOB_RANGE) - 0.5)
+        self.rect.centery = self.pos.y + offset * self.dir
+        self.step += settings.BOB_SPEED
+        if self.step > settings.BOB_RANGE:
+            self.step = 0
+            self.dir *= -1
+
+class item_pick_up(pygame.sprite.Sprite):
+    def __init__(self, x, y, all_sprites, player):
+        self.player = player
+        self.x = x
+        self.y = y
+        self.all_sprites = all_sprites
+        self.groups = self.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.img = []
+        self.load_images()
+        self.image = self.img[0]
+        self.rect = self.image.get_rect()
+        self.count = 0
+        self.div_count = 0
+
+    def load_images(self):
+        for i in range(8):
+            temp = get_image('./images/effects/tile00%s.png' % i)
+            self.img.append(temp)
+
+    def update(self):
+        self.rect.x = self.player.rect.x
+        self.rect.y = self.player.rect.y
+        self.count += 1
+        if self.count % 16 == 0:
+            self.div_count = self.count % 16
+        if self.div_count == 9:
+            self.kill()
+        self.image = self.img[self.div_count]
