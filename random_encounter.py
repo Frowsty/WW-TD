@@ -70,15 +70,20 @@ class random_Encounter():
 
         while self.looping:
             pygame.event.get()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.looping = False
             self.screen.fill((0,0,0))
             image = get_image(self.card)
             w, h = pygame.display.get_surface().get_size()
             self.screen.blit(image, ((w // 2) - (image.get_width()//2),
                                 (h// 2) - (image.get_height() //2)))
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        self.looping = False
+            font = pygame.font.Font(self.player.font, 38)
+            text = 'Press Enter to continue...'
+            text = pygame.font.Font.render(font, text, False, settings.WHITE)
+            self.screen.blit(text, (settings.SCREEN_WIDTH//2 - (text.get_width()//2), settings.SCREEN_HEIGHT - 80))
+
 
 
             pygame.display.flip()
@@ -154,10 +159,14 @@ class Scenario1():
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
         self.player.reload('silent')
         #load map
+        pygame.mixer.music.fadeout(1000)
+        pygame.mixer.music.load('./sounds/under_attack_music.wav')
         self.load_map()
+
 
     def load_map(self):
         #setting up the map
+
 
         self.text_box = entities.Text_Box('./text/.json', self.screen)
         for sprite in self.enemies:
@@ -201,7 +210,10 @@ class Scenario1():
 
         pygame.event.clear()
         self.player.vel = pygame.math.Vector2(0, 0)
-
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.play(-1)
         #start the loop
         self.loop()
 
@@ -295,7 +307,7 @@ class Scenario2():
     def __init__(self, map, map_img, player, objective_group, walls, all_sprite_group, enemies, projectile,
                  screen, dt, player_group, type):
         #passed through variables
-        self.type
+        self.type = type
         print("Collect the items")
         self.player_group = player_group
         self.objective_group = objective_group
@@ -322,6 +334,8 @@ class Scenario2():
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
         self.player.reload('silent')
         #load map
+        pygame.mixer.music.fadeout(1000)
+        pygame.mixer.music.load('./sounds/tipped_music.wav')
         self.load_map()
 
     def load_map(self):
@@ -371,6 +385,10 @@ class Scenario2():
         self.player.vel = pygame.math.Vector2(0, 0)
 
         #start the loop
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.play(-1)
         self.loop()
 
     def loop(self):
@@ -405,6 +423,7 @@ class Scenario2():
             hits = pygame.sprite.spritecollide(self.player, self.player.item_group, False, collide_hit_rect)
             for hit in hits:
                 self.counter.adj(1)
+                self.player.pickup_snd()
                 hit.kill()
 
 
@@ -476,6 +495,8 @@ class Scenario3():
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
 
         #load map
+        pygame.mixer.music.fadeout(1000)
+        pygame.mixer.music.load('./sounds/scrap.wav')
         self.load_map()
 
     def load_map(self):
@@ -520,6 +541,10 @@ class Scenario3():
         self.player.vel = pygame.math.Vector2(0, 0)
 
         #start the loop
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.play(-1)
         self.loop()
 
     def loop(self):
@@ -554,6 +579,7 @@ class Scenario3():
             hits = pygame.sprite.spritecollide(self.player, self.player.item_group, False, collide_hit_rect)
             for hit in hits:
                 self.counter.adj(1)
+                self.player.pickup_snd()
                 hit.kill()
 
 

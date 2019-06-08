@@ -30,12 +30,6 @@ PURPLE = (153, 51, 255)
 DK_PURPLE = (102, 0, 204)
 BROWN = (204, 153, 0)
 
-def play_sound(file):
-    if ui.enable_sound.get_state():
-        return pygame.mixer.Sound(file).set_volume(0)
-    else:
-        return pygame.mixer.Sound(file).set_volume(0.3)
-
 
 # ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 # instead of wasting memory on a new image. if it hasn't been it loads it.
@@ -142,17 +136,21 @@ class Player(pygame.sprite.Sprite):
 
         pygame.key.set_repeat(10,10)
         # Sound loading
-        pygame.mixer.music.load(settings.BG_MUSIC)
+        pygame.mixer.music.load('./sounds/town.ogg')
+        pygame.mixer.music.play(-1)
         self.effects_sounds = {}
         for type in settings.EFFECTS_SOUNDS:
             self.effects_sounds[type] = pygame.mixer.Sound(settings.EFFECTS_SOUNDS[type])
-        self.weapon_sounds = {}
-        for weapon in settings.WEAPON_SOUNDS:
-            self.weapon_sounds[weapon] = []
-            for snd in settings.WEAPON_SOUNDS[weapon]:
-                s = pygame.mixer.Sound(snd)
-                s.set_volume(0.3)
-                self.weapon_sounds[weapon].append(s)
+        self.weapon_sounds = []
+
+        for i in range(len(settings.PISTOL_SOUNDS)):
+            s = pygame.mixer.Sound(settings.PISTOL_SOUNDS[i])
+            s.set_volume(0.3)
+            self.weapon_sounds.append(s)
+
+    def pickup_snd(self):
+        s = pygame.mixer.Sound('./sounds/pickup.wav')
+        pygame.mixer.Sound.play(s)
 
     def update_settings(self):
 
@@ -640,6 +638,7 @@ class MuzzleFlash(pygame.sprite.Sprite):
 class Counter(pygame.sprite.Sprite):
     def __init__(self, count, all_sprite):
         self.count = count
+        #self.camera = camera
         self.all_sprite = all_sprite
         self.groups = self.all_sprite
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -659,8 +658,8 @@ class Counter(pygame.sprite.Sprite):
         self.text()
 
     def draw(self):
-        self.screen.blit(self.image, self.rect)
-        self.screen.blit(self.text_cont, (settings.SCREEN_WIDTH - 100, settings.SCREEN_HEIGHT - ((80-(80 - 64))//2)))
+        #self.screen.blit(self.text_cont, (settings.SCREEN_WIDTH - 100, settings.SCREEN_HEIGHT - ((80-(80 - 64))//2)))
+        pass
 
 class food(pygame.sprite.Sprite):
     def __init__(self, x, y, enemies, screen, player, walls, dt, camcam, all_Sprite_Group, counter, item_group):

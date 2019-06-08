@@ -74,9 +74,9 @@ pygame.display.set_caption("WW - TD")
 # Define Clock
 clock = pygame.time.Clock()
 
-font = pygame.font.SysFont("Arial", 20)
-big_font = pygame.font.SysFont("Arial", 60)
-ammo_font = pygame.font.SysFont("Arial", 30)
+font = pygame.font.SysFont("./images/font/Arial.ttf", 20)
+big_font = pygame.font.SysFont("./images/font/Arial.ttf", 60)
+ammo_font = pygame.font.SysFont("./images/font/Arial.ttf", 30)
 
 start_game = False
 how_to = False
@@ -151,6 +151,7 @@ powerup_tick = pygame.time.get_ticks()
 powerup_list = []
 menu_input = ""
 
+intro = entities.Text_box('./text/instructions.json', screen)
 
 
 def Map_screen():
@@ -185,8 +186,11 @@ def load_map():
 def start_town(mouse_x, mouse_y):
 
     global walls_Group, enemey_Sprite_Group, powerup_tick, previous_state, dt
-    pygame.mixer.music.load('./sounds/12th_Street_Rag_1919.ogg')
-    pygame.mixer.music.play(-1)
+    if pygame.mixer.music.get_busy():
+        pass
+    else:
+        pygame.mixer.music.load('./sounds/town.ogg')
+        pygame.mixer.music.play(-1)
     enemies = enemy_Sprite_Group
 
     tile_of_map, map_img, map_rect = load_map()
@@ -316,7 +320,7 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
-        screen.blit(counter.image, camcam.apply(counter.image))
+        screen.blit(counter.image, camcam.apply(counter))
 
         for sprite in pickup_Effect_Group:
             print(sprite.image)
@@ -348,6 +352,7 @@ def start_town(mouse_x, mouse_y):
             if not player.item_effect_current:
                 item_effect = entities.item_pick_up(player.rect.x, player.rect.y, player, pickup_Effect_Group)
                 player.item_effect_current = True
+            self.player.pickup_snd()
             hit.kill()
 
         hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)

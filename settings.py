@@ -80,29 +80,8 @@ MOB_KNOCKBACK = 80
 AVOID_RADIUS = 40
 DETECT_RADIUS = 400
 SPLAT = './images/splatgreen.png'
-# Layers
-WALL_LAYER = 1
-PLAYER_LAYER = 2
-BULLET_LAYER = 3
-MOB_LAYER = 2
-EFFECTS_LAYER = 4
-ITEMS_LAYER = 1
-
-# Effects
 
 
-FLASH_DURATION = 15
-
-NIGHT_COLOR = (20, 20, 20)
-LIGHT_RADIUS = (500, 500)
-LIGHT_MASK = "./images/light_350_soft.png"
-
-
-#todo add items
-# Items
-
-#ITEM_IMAGES = {'health': 'health_pack.png',
-#               'shotgun': 'obj_shotgun.png'}
 
 ITEM_IMAGES = {'pepper': './images/food/1.png', 'candy': './images/food/2.png', 'jello': './images/food/3.png',
                'cake': './images/food/4.png', 'blue potion': './images/food/5.png',
@@ -135,16 +114,15 @@ CARDS =  {'wheel': './images/cards/broken_wheel.png', 'tip': './images/cards/wag
           'attack': './images/cards/attack.png'}
 V_EFFECTS = {'item_pickup': './images/effects/tile00'}
 
-HEALTH_PACK_AMOUNT = 20
 BOB_RANGE = 32
 BOB_SPEED = 0.6
 
-#todo change sounds
-# Sounds
 BG_MUSIC = './sounds/12th_Street_Rag_1919.ogg'
 PLAYER_HIT_SOUNDS = ['./sounds/pain/8.wav', './sounds/pain/9.wav', './sounds/pain/10.wav', './sounds/pain/11.wav']
+PISTOL_SOUNDS = ['./sounds/pistol.wav', './sounds/pistol2.wav', './sounds/barreta.wav']
 
-ZOMBIE_HIT_SOUNDS = ['./sounds/splat-15.wav']
+
+
 WEAPON_SOUNDS = {'pistol': ['./sounds/barreta.wav']}
                  #'shotgun': ['./sounds/shotgun.wav']}
 EFFECTS_SOUNDS = {'level_start': './sounds/level_start.wav'}

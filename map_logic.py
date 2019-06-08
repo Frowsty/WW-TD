@@ -149,6 +149,7 @@ class Base_grid(pygame.sprite.Sprite):
 
 class map_Player_Icon(pygame.sprite.Sprite):
     def __init__(self, screen, pos, waypoints, map, player_Group, player, all_sprite_group, enemies, projectile_group, objective_group, walls, dt):
+
         self.all_sprite_group = all_sprite_group
         self.dt = dt
         self.projectile_group = projectile_group
@@ -164,10 +165,10 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.load_images()
         self.image = self.images[0]
         self.img_counter = 0
-        self.speed = 5
+        self.speed = 3
         self.vel = Vector2(0,0)
         self.rect = self.image.get_rect(center=pos)
-        self.max_speed = 10
+        self.max_speed = 5
         self.pos = Vector2(pos)
         self.waypoints = waypoints
         self.waypoint_index = 0
@@ -182,6 +183,9 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.pop_list = []
         self.find_total_distance()
         self.distance_since_encounter = 0
+
+        pygame.mixer.music.fadeout(1000)
+        pygame.mixer.music.load('./sounds/map_music.wav')
 
     def load_images(self):
         img = get_image('./images/placeholder/map_icon/cowboy_map_icon1.png')
@@ -234,11 +238,14 @@ class map_Player_Icon(pygame.sprite.Sprite):
         self.images.append(img)
 
     def update(self, screen):
+        if pygame.mixer.music.get_busy():
+            pass
+        else:
+            pygame.mixer.music.play(-1)
 
         if self.moving == True:
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load('./sounds/')
-            pygame.mixer.music.play()
+
+
             #vector pointing to the target
             heading = self.target - self.pos
             #distance to target
@@ -291,7 +298,22 @@ class map_Player_Icon(pygame.sprite.Sprite):
 
     def game_won(self):
         self.toggle_movement()
-        #todo create game finish screen
+        self.end_screen = get_image_convert_alpha('./images/end.png')
+        self.end = pygame.transform.scale(self.end_screen, (settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
+        self.screen.blit(self.end, (0,0))
+        pygame.mixer.music.fadeout(1000)
+        pygame.mixer.music.load('./sounds/end_music.wav')
+        pygame.mixer.music.play()
+
+        while true:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
+                    running = False
+                    pygame.mixer.music.stop()
+                    raise sys.exit()
+                    quit()
+
 
     def next_waypoint_distance(self):
         return self.distance
