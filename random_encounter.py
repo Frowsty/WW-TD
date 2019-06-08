@@ -4,7 +4,12 @@ import os
 from os import path
 import map_logic
 import tilemap
+from tilemap import *
 import camera
+import ui_components as ui
+import game_entities as entities
+
+
 
 _image_library = {}
 
@@ -27,13 +32,16 @@ def get_image_convert_alpha(path):
 
 
 class random_Encounter():
-    def __init__(self, screen, player, player_group, camcam):
+    def __init__(self, screen, player, player_group, all_sprite_group, enemies, projectile_group, objective_group, walls):
+        self.all_Sprite_Group = all_sprite_group
+        self.enemies = enemies
         self.player = player
         self.player_group = player_group
         self.screen = screen
         self.looping = True
-        self.camcam = camcam
-
+        self.projectile_group = projectile_group
+        self.objective_group = objective_group
+        self.walls = walls
         self.loop()
 
 
@@ -64,8 +72,23 @@ class random_Encounter():
 
         self.select_map()
 
+        for tile_object in self.map.tmxdata.objects:
+            obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
+                                             tile_object.y + tile_object.height / 2)
+            if tile_object.name == 'player':
+                self.player.move_rect(obj_center.x, obj_center.y)
+            if tile_object.name == 'enemy':
+                entities.Enemy(obj_center.x, obj_center.y, self.enemies, self.screen, self.player)
+            if tile_object.name == 'map':
+                entities.Objective(tile_object.x, tile_object.y,
+                                   tile_object.width, tile_object.height, self.objective_group)
+            if tile_object.name == 'wall':
+                entities.Obstacle(tile_object.x, tile_object.y,
+                                  tile_object.width, tile_object.height, self.walls)
+
+
         self.encounter = True
-        self.camera = camera.Camera(1000,1000)
+        self.camcam = camera.Camera(self.map.width, self.map.height)
 
         while self.encounter:
             self.screen.fill((0, 0, 0))
@@ -82,11 +105,11 @@ class random_Encounter():
             self.player.ammo_reload_toggle(ui.auto_reload.get_state())
             # ammo_font and screen are passed in on creation
 
-            for sprite in all_Sprite_Group:
+            for sprite in self.all_Sprite_Group:
                 self.screen.blit(sprite.image, self.camcam.apply(sprite))
 
             # enemy hits player
-            hits = pygame.sprite.spritecollide(self.player, enemies, False, collide_hit_rect)
+            hits = pygame.sprite.spritecollide(self.player, self.enemies, False, collide_hit_rect)
             for hit in hits:
                 if random < 0.7:
                     choice(self.player_hit_sounds).play()
@@ -96,15 +119,15 @@ class random_Encounter():
                 self.player.hit()
                 player.rect += pygame.math.Vector2(75, 0).rotate(-hit.direction)
             # bullets hit enemys
-            hits = pygame.sprite.groupcollide(enemies, projectile_Group, False, True)
+            hits = pygame.sprite.groupcollide(self.enemies, self.projectile_group, False, True)
             for enemy in hits:
                 for bullet in hits[enemy]:
                     enemy.health -= bullet.damage
                 enemy.vel = vec(0, 0)
 
-            hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)
+            hits = pygame.sprite.spritecollide(self.player, self.objective_group, False, collide_hit_rect)
             if hits:
-                if len(enemies) < 1:
+                if len(self.enemies) < 1:
                     break
 
             pygame.display.flip()
@@ -119,6 +142,7 @@ class random_Encounter():
         self.map = tilemap.TiledMap(filename)
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
+        self.map.rect = self.map_rect
 
 
     def select_encounter(self):

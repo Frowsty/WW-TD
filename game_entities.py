@@ -111,7 +111,12 @@ class Player(pygame.sprite.Sprite):
         self.max_health = 100
         self.vel = pygame.math.Vector2(0,0)
         self.pos = pygame.math.Vector2(x,y)
+        self.pressed_left = False
+        self.pressed_right = False
+        self.pressed_up = False
+        self.pressed_down = False
 
+        pygame.key.set_repeat(10,10)
         # Sound loading
         pygame.mixer.music.load(settings.BG_MUSIC)
         self.effects_sounds = {}
@@ -137,26 +142,45 @@ class Player(pygame.sprite.Sprite):
             self.damage = 25
             self.health = 50
 
+    def health_bar(self):
+
+        if self.health > 75:
+            self.health_color = GREEN
+        elif self.health > 45 and self.health < 75:
+            self.health_color = YELLOW
+        elif self.health > 25 and self.health < 45:
+            self.health_color = ORANGE
+        elif self.health > 0 and self.health < 25:
+            self.health_color = RED
+
+        pygame.draw.line(self.screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 10),
+                         (self.cur_pos[0] + self.player_frames[0].get_width() * (self.health / 100),
+                          self.cur_pos[1] - 10), 5)
+
+        # Healthbar outline
+        # TOP
+        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 14),
+                         (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14), 2)
+        # BOTTOM
+        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 8),
+                         (self.cur_pos[0] + self.player_frames[0].get_width() + 2, self.cur_pos[1] - 8), 2)
+        # LEFT
+        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 14),
+                         (self.cur_pos[0] - 2, self.cur_pos[1] - 8), 2)
+        # RIGHT
+        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14),
+                         (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 8), 2)
 
     def load_frames(self):
         self.player_frames.append(get_image("character_frames/character_main.png"))
         self.player_frames.append(get_image("character_frames/character_reload.png"))
 
 
-    # def clamp_movement(self):
-    #     if self.rect.x >= 1280 - self.player_frames[0].get_width() - 50:
-    #         self.rect.x = 1280 - self.player_frames[0].get_width() - 50
-    #     if self.rect.x <= 50:
-    #         self.rect.x = 50
-    #     if self.rect.x >= 960 - self.player_frames[0].get_height() - 50:
-    #         self.rect.x = 960 - self.player_frames[0].get_height() - 50
-    #     if self.rect.x <= 50:
-    #         self.rect.x = 50
-
     def ammo_reload_toggle(self, state):
         self.ammo_reload = state
 
     def update(self):
+        self.get_keys()
         self.ammo_reload_toggle(ui.auto_reload.get_state())
         if self.health <= 0:
             self.health = 0
@@ -180,38 +204,46 @@ class Player(pygame.sprite.Sprite):
 
         self.actions()
 
+    def move_rect(self, x, y):
+        self.pos.x = x
+        self.pos.y = y
+
     def get_keys(self):
+        events = pygame.event.get()
 
-        keys = pygame.key.get_pressed()
-        #self.barrel_Offset, self.dir_facing
+        for event in events:
+            self.vel = vec(0,0)
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:  # check for key presses
+                if event.key == pygame.K_LEFT or event.key == pygame.K_a:  # left arrow turns left
+                    self.vel = pygame.math.Vector2(-settings.PLAYER_SPEED, 0)
+                    self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 180)
+                    self.barrel_Offset = (-25, -10)
+                    self.dir_facing = 180
+                if event.key == pygame.K_RIGHT or event.key == pygame.K_d:  # right arrow turns right
+                    self.vel = pygame.math.Vector2(settings.PLAYER_SPEED, 0)
+                    self.image = self.player_frames[self.walkcount]
+                    self.barrel_Offset = (25, 10)
+                    self.dir_facing = 0
+                if event.key == pygame.K_UP or event.key == pygame.K_w:  # up arrow goes up
+                    self.vel = pygame.math.Vector2(0, -settings.PLAYER_SPEED)
+                    self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 90)
+                    self.barrel_Offset = (10, -25)
+                    self.dir_facing = 270
+                if event.key == pygame.K_DOWN or event.key == pygame.K_s:  # down arrow goes down
+                    self.vel = pygame.math.Vector2(0, settings.PLAYER_SPEED)
+                    self.image = pygame.transform.rotate(self.player_frames[self.walkcount], -90)
+                    self.barrel_Offset = (-10, 25)
+                    self.dir_facing = 90
+                if event.key == pygame.K_SPACE:
+                    self.shoot()
 
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.vel = pygame.math.Vector2(0, -settings.PLAYER_SPEED)
-            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 90)
-            self.barrel_Offset = (10, -25)
-            self.dir_facing = 270
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.vel = pygame.math.Vector2(0, settings.PLAYER_SPEED)
-            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], -90)
-            self.barrel_Offset = (-10, 25)
-            self.dir_facing = 90
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.vel = pygame.math.Vector2(-settings.PLAYER_SPEED, 0)
-            self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 180)
-            self.barrel_Offset = (-25, -10)
-            self.dir_facing = 180
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.vel = pygame.math.Vector2(settings.PLAYER_SPEED, 0)
-            self.image = self.player_frames[self.walkcount]
-            self.barrel_Offset = (25, 10)
-            self.dir_facing = 0
+                if event.key == pygame.K_r:
+                    self.reload()
 
 
-        if keys[pygame.K_SPACE]:
-            self.shoot()
 
-        if keys[pygame.K_r]:
-            self.reload()
 
 
 
@@ -234,7 +266,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def actions(self):
-        self.get_keys()
+
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
         self.pos += self.vel * self.dt
@@ -266,8 +298,8 @@ class Player(pygame.sprite.Sprite):
 
     def draw(self):
         ui.show_healthbar.get_state()
-        health_text = self.font.render(f"HEALTH: {self.health}", True, self.health_color)
-        self.screen.blit(health_text, ((1280 / 2), 5))
+        if show_healthbar == True:
+            self.health_bar()
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -295,6 +327,35 @@ class Enemy(pygame.sprite.Sprite):
         self.hit_player = False
         self.direction = pygame.math.Vector2(0, 0)
 
+    def health_bar(self, screen):
+
+        if self.health > 75:
+            self.health_color = GREEN
+        elif self.health > 45 and self.health < 75:
+            self.health_color = YELLOW
+        elif self.health > 25 and self.health < 45:
+            self.health_color = ORANGE
+        elif self.health > 0 and self.health < 25:
+            self.health_color = RED
+
+        # The Healthbar
+        pygame.draw.line(screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 15),
+                         (self.cur_pos[0] + self.player_frame.get_width() * (self.health / 100), self.cur_pos[1] - 15),
+                         5)
+
+        # Healthbar outline
+        # TOP
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 18),
+                         (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18), 2)
+        # BOTTOM
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 12),
+                         (self.cur_pos[0] + self.player_frame.get_width() + 2, self.cur_pos[1] - 12), 2)
+        # LEFT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 18),
+                         (self.cur_pos[0] - 2, self.cur_pos[1] - 12), 2)
+        # RIGHT
+        pygame.draw.line(screen, BLACK, (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18),
+                         (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 12), 2)
 
     def clamp_movement(self):
         if self.rect[0] >= 1280 - self.player_frame.get_width() - 50:

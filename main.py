@@ -69,7 +69,7 @@ Map_Shown = False
 
 # Set window title
 pygame.display.set_caption("WW - TD")
-pygame.key.set_repeat(300,100)
+
 
 # Define Clock
 clock = pygame.time.Clock()
@@ -128,7 +128,7 @@ player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprit
 
 #removed enemies from manually being placed on board, now enemies spawn on markers in tile maps from the maplogic
 
-map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player)
+map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player, all_Sprite_Group, enemy_Sprite_Group, projectile_Group, objective_Group, walls_Group)
 map_Sprite_Group.add(map)
 
 
@@ -239,10 +239,7 @@ def start_town(mouse_x, mouse_y):
         obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
                          tile_object.y + tile_object.height / 2)
         if tile_object.name == 'player':
-            player.rect.x = obj_center.x
-            player.pos.x = player.rect.x
-            player.rect.y = obj_center.y
-            player.pos.y = player.pos.y
+            player.move_rect(obj_center.x, obj_center.y)
         if tile_object.name == 'map':
             entities.Objective(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, objective_Group)
@@ -250,8 +247,6 @@ def start_town(mouse_x, mouse_y):
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
     camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
-    camera_group = pygame.sprite.GroupSingle()
-    camera_group.add(camcam)
 
 
     while encounter:

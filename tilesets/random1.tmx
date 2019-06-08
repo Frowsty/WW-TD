@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="8" nextobjectid="30">
+<map version="1.2" tiledversion="1.2.2" orientation="orthogonal" renderorder="right-down" width="35" height="20" tilewidth="64" tileheight="64" infinite="0" nextlayerid="8" nextobjectid="31">
  <tileset firstgid="1" source="temp.tsx"/>
  <tileset firstgid="253" name="try2" tilewidth="64" tileheight="64" tilecount="49" columns="7">
   <image source="try2.png" width="500" height="500"/>
@@ -101,13 +101,13 @@
 </data>
  </layer>
  <objectgroup id="3" name="Object Layer 1">
-  <object id="20" name="enemy" type="enemy" x="27" y="241">
+  <object id="20" name="enemy" type="enemy" x="77" y="185">
    <point/>
   </object>
-  <object id="21" name="enemy" type="enemy" x="27" y="293">
+  <object id="21" name="enemy" type="enemy" x="69" y="295">
    <point/>
   </object>
-  <object id="22" name="enemy" type="enemy" x="53" y="417">
+  <object id="22" name="enemy" type="enemy" x="103" y="451">
    <point/>
   </object>
   <object id="23" name="enemy" type="enemy" x="74" y="621">
@@ -116,7 +116,7 @@
   <object id="24" name="enemy" type="enemy" x="328" y="707">
    <point/>
   </object>
-  <object id="25" name="enemy" type="enemy" x="73" y="33">
+  <object id="25" name="enemy" type="enemy" x="129" y="81">
    <point/>
   </object>
   <object id="26" name="enemy" type="enemy" x="1489" y="1044">
@@ -128,6 +128,6 @@
   <object id="28" name="player" type="player" x="1218" y="340">
    <point/>
   </object>
-  <object id="29" name="map" type="map" x="770" y="200" width="241" height="175"/>
+  <object id="29" name="map" type="map" x="790.667" y="247.333" width="190.333" height="79.6667"/>
  </objectgroup>
 </map>
