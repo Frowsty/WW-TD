@@ -47,6 +47,8 @@ PLAYER_SPEED = 200
 PLAYER_HIT_RECT = pygame.Rect(0,0, 40, 40)
 PLAYER_HEALTH = 100
 PLAYER_ROT_SPEED = 10
+FLASH_DURATION = 50
+
 DAMAGE_ALPHA = [i for i in range(0, 255, 55)]
 BARREL_OFFSET = pygame.math.Vector2(30, 10)
 

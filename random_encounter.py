@@ -69,22 +69,22 @@ class random_Encounter():
     def loop(self):
 
         while self.looping:
-            pygame.event.get()
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        self.looping = False
+
             self.screen.fill((0,0,0))
             image = get_image(self.card)
             w, h = pygame.display.get_surface().get_size()
             self.screen.blit(image, ((w // 2) - (image.get_width()//2),
                                 (h// 2) - (image.get_height() //2)))
-            font = pygame.font.Font(self.player.font, 38)
-            text = 'Press Enter to continue...'
-            text = pygame.font.Font.render(font, text, False, settings.WHITE)
-            self.screen.blit(text, (settings.SCREEN_WIDTH//2 - (text.get_width()//2), settings.SCREEN_HEIGHT - 80))
+            # font = pygame.font.Font(self.player.font, 38)
+            # text = 'Press Enter to continue...'
+            # text = pygame.font.Font.render(font, text, False, settings.WHITE)
+            #self.screen.blit(text, (settings.SCREEN_WIDTH//2 - (text.get_width()//2), settings.SCREEN_HEIGHT - 80))
 
-
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.looping = False
 
             pygame.display.flip()
             pygame.time.Clock().tick(60)
@@ -157,7 +157,7 @@ class Scenario1():
         self.ammo_font = pygame.font.SysFont("Arial", 30)
         self.clock = pygame.time.Clock()
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
-        self.player.reload('silent')
+        self.player.reload()
         #load map
         pygame.mixer.music.fadeout(1000)
         pygame.mixer.music.load('./sounds/under_attack_music.wav')
@@ -168,7 +168,7 @@ class Scenario1():
         #setting up the map
 
 
-        self.text_box = entities.Text_Box('./text/.json', self.screen)
+        self.text_box = entities.Text_Box('./text/attack.json', self.screen)
         for sprite in self.enemies:
             sprite.kill()
 
@@ -254,6 +254,7 @@ class Scenario1():
                 hit.vel = vec(0, 0)
             if hits:
                 self.player.hit()
+
                 self.player.vel += pygame.math.Vector2(75, 0).rotate(-hit.rot)
             # bullets hit enemys
             hits = pygame.sprite.groupcollide(self.enemies, self.projectile_group, False, True)
@@ -287,7 +288,7 @@ class Scenario1():
                     sprite.health_bar(self.camcam)
             except:
                 pass
-        self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
+        #self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
         self.player.draw()
         for sprite in self.enemies:
             self.screen.blit(sprite.image, self.camcam.apply(sprite))
@@ -332,7 +333,7 @@ class Scenario2():
         self.ammo_font = pygame.font.SysFont("Arial", 30)
         self.clock = pygame.time.Clock()
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
-        self.player.reload('silent')
+        self.player.reload()
         #load map
         pygame.mixer.music.fadeout(1000)
         pygame.mixer.music.load('./sounds/tipped_music.wav')
@@ -422,7 +423,7 @@ class Scenario2():
             # enemy hits player
             hits = pygame.sprite.spritecollide(self.player, self.player.item_group, False, collide_hit_rect)
             for hit in hits:
-                self.counter.adj(1)
+                self.counter.counter_adj(1)
                 self.player.pickup_snd()
                 hit.kill()
 
@@ -453,7 +454,7 @@ class Scenario2():
                     sprite.health_bar(self.camcam)
             except:
                 pass
-        self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
+        #self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
         self.player.draw()
         for sprite in self.player.item_group:
             self.screen.blit(sprite.image, self.camcam.apply(sprite))
@@ -501,7 +502,7 @@ class Scenario3():
 
     def load_map(self):
         #setting up the map
-        self.text_box('./text/wagon_wheel.json')
+        self.text_box = entities.Text_Box('./text/wagon_wheel.json', self.screen)
         self.camcam = camera.Camera(self.map.width, self.map.height)
         self.player.in_camera(self.camcam)
 

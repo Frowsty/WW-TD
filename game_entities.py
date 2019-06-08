@@ -139,8 +139,7 @@ class Player(pygame.sprite.Sprite):
         pygame.mixer.music.load('./sounds/town.ogg')
         pygame.mixer.music.play(-1)
         self.effects_sounds = {}
-        for type in settings.EFFECTS_SOUNDS:
-            self.effects_sounds[type] = pygame.mixer.Sound(settings.EFFECTS_SOUNDS[type])
+
         self.weapon_sounds = []
 
         for i in range(len(settings.PISTOL_SOUNDS)):
@@ -359,7 +358,7 @@ class Player(pygame.sprite.Sprite):
                 if self.muted == True:
                     pass
                 else:
-                    snd = choice(self.weapon_sounds[self.weapon])
+                    snd = choice(self.weapon_sounds)
                     if snd.get_num_channels() > 2:
                         snd.stop()
                     snd.play()

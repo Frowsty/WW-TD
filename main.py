@@ -320,7 +320,7 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
-        
+
 
         for sprite in pickup_Effect_Group:
             print(sprite.image)
@@ -352,7 +352,7 @@ def start_town(mouse_x, mouse_y):
             if not player.item_effect_current:
                 item_effect = entities.item_pick_up(player.rect.x, player.rect.y, player, pickup_Effect_Group)
                 player.item_effect_current = True
-            self.player.pickup_snd()
+            player.pickup_snd()
             hit.kill()
 
         hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)
