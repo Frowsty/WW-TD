@@ -957,6 +957,7 @@ class scrap(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.type, self.img = choice(list(settings.SCRAP_IMAGES.items()))
         self.image = get_image_convert_alpha(self.img)
+        self.image = pygame.transform.scale(self.image, (64,64))
         self.rect = self.image.get_rect()
         self.pos = vec(0,0)
         self.pos.x = x
