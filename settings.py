@@ -1,7 +1,11 @@
 import pygame
 
 
-
+if not pygame.display.get_init():
+    pygame.display.init()
+pygame.font.init()
+if not pygame.mixer.get_init():
+    pygame.mixer.init()
 
 
 # Define colors
@@ -36,7 +40,7 @@ Map_Shown = False
 # Define Clock
 clock = pygame.time.Clock()
 
-
+TILESIZE = 64
 start_game = False
 how_to = False
 PLAYER_SPEED = 200
@@ -68,13 +72,13 @@ MUZZLE_FLASHES = ['./images/whitePuff15.png', './images/whitePuff16.png', './ima
                   './images/whitePuff18.png']
 # Mob settings
 MOB_IMG = 'zombie1_hold.png'
-MOB_SPEEDS = [7, 15, 14, 9]
+MOB_SPEEDS = [50, 60, 75, 90]
 MOB_HIT_RECT = pygame.Rect(6,0, 25, 43)
 MOB_HEALTH = 100
 MOB_DAMAGE = 15
-MOB_KNOCKBACK = 20
-AVOID_RADIUS = 20
-DETECT_RADIUS = 40
+MOB_KNOCKBACK = 80
+AVOID_RADIUS = 40
+DETECT_RADIUS = 400
 SPLAT = './images/splatgreen.png'
 # Layers
 WALL_LAYER = 1
@@ -111,3 +115,7 @@ ZOMBIE_HIT_SOUNDS = ['./sounds/splat-15.wav']
 WEAPON_SOUNDS = {'pistol': ['./sounds/barreta.wav']}
                  #'shotgun': ['./sounds/shotgun.wav']}
 EFFECTS_SOUNDS = {'level_start': './sounds/level_start.wav'}
+
+phs = []
+for snd in PLAYER_HIT_SOUNDS:
+    phs.append(pygame.mixer.Sound(snd))

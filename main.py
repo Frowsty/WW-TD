@@ -5,7 +5,8 @@ import random
 import ui_components as ui
 import game_entities as entities
 from time import sleep
-
+import math
+from math import atan2
 
 import settings
 from settings import *
@@ -23,11 +24,7 @@ vec = pygame.math.Vector2
 # initializers
 if __name__ == 'main':
     pygame.init()
-if not pygame.display.get_init():
-    pygame.display.init()
-pygame.font.init()
-if not pygame.mixer.get_init():
-    pygame.mixer.init()
+
 
 # sprite groups
 all_Sprite_Group = pygame.sprite.Group()
@@ -71,9 +68,7 @@ Map_Shown = False
 
 # Set window title
 pygame.display.set_caption("WW - TD")
-player_hit_sounds = []
-for snd in settings.PLAYER_HIT_SOUNDS:
-    player_hit_sounds.append(pygame.mixer.Sound(snd))
+
 
 # Define Clock
 clock = pygame.time.Clock()
@@ -85,6 +80,16 @@ ammo_font = pygame.font.SysFont("Arial", 30)
 start_game = False
 how_to = False
 settings_menu = False
+
+def play_sound(file):
+    if ui.enable_sound.get_state():
+        pygame.mixer.Sound(file).set_volume(0)
+    else:
+        pygame.mixer.Sound(file).set_volume(0.3)
+
+previous_state = False
+
+
 
 
 # ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
@@ -132,7 +137,7 @@ player = entities.Player(dt, ammo_font, walls_Group, projectile_Group, all_Sprit
 
 #removed enemies from manually being placed on board, now enemies spawn on markers in tile maps from the maplogic
 
-map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player, all_Sprite_Group, enemy_Sprite_Group, projectile_Group, objective_Group, walls_Group)
+map = map_logic.GameMapController(map_Sprite_Group, _Multiplier, screen, terrain_sprites, mpi_Group, player_Sprite_Group, player, all_Sprite_Group, enemy_Sprite_Group, projectile_Group, objective_Group, walls_Group, dt)
 map_Sprite_Group.add(map)
 
 
@@ -148,6 +153,7 @@ menu_input = ""
 
 
 def Map_screen():
+
     map.showing = True
     player.bullets.clear()
     enemy_Sprite_Group.clear(screen, (0,0,settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
@@ -176,7 +182,7 @@ def load_map():
 
 
 def start_town(mouse_x, mouse_y):
-    global walls_Group, enemey_Sprite_Group, powerup_tick
+    global walls_Group, enemey_Sprite_Group, powerup_tick, previous_state, dt
     enemies = enemy_Sprite_Group
 
     tile_of_map, map_img, map_rect = load_map()
@@ -248,21 +254,24 @@ def start_town(mouse_x, mouse_y):
             entities.Objective(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, objective_Group)
         if tile_object.name == 'enemy':
-            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group , screen, player)
+            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group , screen, player, walls_Group, dt, camcam, all_Sprite_Group)
         if tile_object.name == 'wall':
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
 
     while encounter:
         screen.fill((0, 0, 0))
-        pygame.event.pump()
+        events = pygame.event.get()
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        keyboard_input = pygame.key.get_pressed()
+
 
 
         camcam.update(player)
+        player.pass_events(events)
         all_Sprite_Group.update()
-        enemy_Sprite_Group.update()
+
+        for sprite in enemy_Sprite_Group:
+            sprite.update()
         player.ammo_reload_toggle(ui.auto_reload.get_state())
 
 
@@ -273,12 +282,15 @@ def start_town(mouse_x, mouse_y):
 
         for sprite in all_Sprite_Group:
             screen.blit(sprite.image, camcam.apply(sprite))
-            if ui.show_healthbar.get_state():
-                sprite.health_bar(camcam)
+            try:
+                if ui.show_healthbar.get_state():
+                    sprite.health_bar(camcam)
+            except:
+                pass
         for sprite in enemy_Sprite_Group:
             screen.blit(sprite.image, camcam.apply(sprite))
             if ui.show_healthbar.get_state():
-                sprite.health_bar(camcam)
+                sprite.health_bar()
 
 
 
@@ -290,12 +302,10 @@ def start_town(mouse_x, mouse_y):
         hits = pygame.sprite.spritecollide(player, enemies, False, collide_hit_rect)
         for hit in hits:
             if random.random() < 0.7:
-                random.choice(player_hit_sounds).play()
-            player.health -= settings.MOB_DAMAGE
-            hit.vel = vec(0,0)
+                random.choice(phs).play()
+            hit.vel = vec(0, 0)
         if hits:
             player.hit()
-            player.pos += pygame.math.Vector2(75, 0).rotate(-hit.direction)
         #bullets hit enemys
         hits = pygame.sprite.groupcollide(enemies, projectile_Group, False, True)
         for enemy in hits:
@@ -372,8 +382,9 @@ def draw_gamewindow(screen, mouse_x, mouse_y, kb_input, fps):
 def main():
     running = True
     while running:
-
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        player.pass_events(events)
+        for event in events:
             if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_ESCAPE]:
                 running = False
                 quit()

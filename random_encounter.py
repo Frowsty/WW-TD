@@ -1,5 +1,6 @@
 import pygame
 import random
+
 import os
 from os import path
 import map_logic
@@ -8,8 +9,11 @@ from tilemap import *
 import camera
 import ui_components as ui
 import game_entities as entities
+import settings
 
+from settings import *
 
+vec = pygame.math.Vector2
 
 _image_library = {}
 
@@ -32,8 +36,9 @@ def get_image_convert_alpha(path):
 
 
 class random_Encounter():
-    def __init__(self, screen, player, player_group, all_sprite_group, enemies, projectile_group, objective_group, walls):
+    def __init__(self, screen, player, player_group, all_sprite_group, enemies, projectile_group, objective_group, walls, dt):
         self.all_Sprite_Group = all_sprite_group
+        self.dt = dt
         self.enemies = enemies
         self.player = player
         self.player_group = player_group
@@ -46,6 +51,8 @@ class random_Encounter():
         for wall in self.walls:
             wall.move(-1000, -1000)
             del wall
+        for enemy in self.enemies:
+            enemy.kill()
         self.loop()
 
 
@@ -74,43 +81,54 @@ class random_Encounter():
             pygame.time.Clock().tick(60)
 
         self.select_map()
-
+        self.camcam = camera.Camera(self.map.width, self.map.height)
+        self.max_num_enemies = 0
         for tile_object in self.map.tmxdata.objects:
             obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
                                              tile_object.y + tile_object.height / 2)
             if tile_object.name == 'player':
                 self.player.move_rect(obj_center.x, obj_center.y)
             if tile_object.name == 'enemy':
-                entities.Enemy(obj_center.x, obj_center.y, self.enemies, self.screen, self.player)
+                self.max_num_enemies +=1
             if tile_object.name == 'map':
                 entities.Objective(tile_object.x, tile_object.y,
                                    tile_object.width, tile_object.height, self.objective_group)
             if tile_object.name == 'wall':
                 entities.Obstacle(tile_object.x, tile_object.y,
                                   tile_object.width, tile_object.height, self.walls)
+        self.num_of_enemies = random.randint(1, self.max_num_enemies)
+        for tile_object in self.map.tmxdata.objects:
+            if self.num_of_enemies == 0:
+                break
+            else:
+                self.num_of_enemies -= 1
+                if tile_object.name == 'enemy':
+                    entities.Enemy(obj_center.x, obj_center.y, self.enemies, self.screen, self.player, self.walls, self.dt,
+                                   self.camcam, self.all_Sprite_Group)
 
 
         self.encounter = True
-        self.camcam = camera.Camera(self.map.width, self.map.height)
+
         pygame.event.clear()
-        self.player.debug = True
 
 
+        self.player.vel = pygame.math.Vector2(0,0)
         while self.encounter:
             self.screen.fill((0, 0, 0))
             #updates and keyinput
-
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            self.player.pass_events(events)
+            for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_j:
                         self.draw_debug = not self.draw_debug
-
+            self.all_Sprite_Group.update()
 
             for sprite in self.enemies:
                 self.camcam.update(sprite)
 
             self.camcam.update(self.player)
             self.enemies.update()
-            self.player.update()
+
             self.player.ammo_reload_toggle(ui.auto_reload.get_state())
 
             self.draw()
@@ -119,13 +137,13 @@ class random_Encounter():
             # enemy hits player
             hits = pygame.sprite.spritecollide(self.player, self.enemies, False, collide_hit_rect)
             for hit in hits:
-                if random < 0.7:
-                    choice(self.player_hit_sounds).play()
+                if random.random() < 0.7:
+                    random.choice(phs).play()
                 self.player.health -= settings.MOB_DAMAGE
                 hit.vel = vec(0, 0)
             if hits:
                 self.player.hit()
-                player.rect += pygame.math.Vector2(75, 0).rotate(-hit.direction)
+                self.player.vel += pygame.math.Vector2(75, 0).rotate(-hit.rot)
             # bullets hit enemys
             hits = pygame.sprite.groupcollide(self.enemies, self.projectile_group, False, True)
             for enemy in hits:
@@ -143,6 +161,7 @@ class random_Encounter():
             pygame.display.flip()
             if self.draw_debug:
                 print("flipping the display")
+            print(len(self.enemies))
             pygame.time.Clock().tick(60)
 
 

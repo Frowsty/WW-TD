@@ -104,7 +104,6 @@ def wang_set(width, height):
     for i in range(height):
         for j in range(width):
             if i == 0 and j == 0:
-                print("both are 0")
                 continue
             else:
                 acceptable = False

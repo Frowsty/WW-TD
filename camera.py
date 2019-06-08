@@ -6,7 +6,7 @@ class Camera:
     def __init__(self, width, height):
         self.camera = pygame.Rect(0, 0, width, height)
         self.width = width
-        self.height = height
+        self.height = height +64
 
     def apply(self, entity):
         return entity.rect.move(self.camera.topleft)

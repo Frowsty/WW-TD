@@ -27,6 +27,13 @@ PURPLE = (153, 51, 255)
 DK_PURPLE = (102, 0, 204)
 BROWN = (204, 153, 0)
 
+def play_sound(file):
+    if ui.enable_sound.get_state():
+        return pygame.mixer.Sound(file).set_volume(0)
+    else:
+        return pygame.mixer.Sound(file).set_volume(0.3)
+
+
 # ASH - image function, loads image into an array and if it has already been loaded, it loads the previous loaded image
 # instead of wasting memory on a new image. if it hasn't been it loads it.
 _image_library = {}
@@ -84,6 +91,7 @@ class Player(pygame.sprite.Sprite):
         self.groups = self.all_Sprite_Group, self.player_Sprite_Group
 
         pygame.sprite.Sprite.__init__(self, self.groups)
+        self.damaged = False
         self.auto_reload = auto_reload
         self.font = font
         self.screen = screen
@@ -119,6 +127,8 @@ class Player(pygame.sprite.Sprite):
         self.pressed_down = False
         self.debug = False
         self.update_settings()
+        self.sound_previous_state = False
+        self.last_hit = pygame.time.get_ticks()
 
         pygame.key.set_repeat(10,10)
         # Sound loading
@@ -182,8 +192,15 @@ class Player(pygame.sprite.Sprite):
         self.player_frames.append(get_image("character_frames/character_reload.png"))
 
     def hit(self):
-        self.damaged = True
-        self.damage_alpha = chain(settings.DAMAGE_ALPHA * 4)
+        if pygame.time.get_ticks() - self.last_hit  > 500:
+            self.health -= settings.MOB_DAMAGE
+            self.last_hit = pygame.time.get_ticks()
+            dir = randint(0, 360)
+            self.damaged = True
+            self.damage_alpha = chain(settings.DAMAGE_ALPHA * 4)
+            self.pos += vec(MOB_KNOCKBACK, 0).rotate(dir)
+
+
 
     def ammo_reload_toggle(self, state):
         self.ammo_reload = state
@@ -208,19 +225,34 @@ class Player(pygame.sprite.Sprite):
             self.reload()
 
         self.actions()
-
+        if ui.enable_sound.get_state() == True and ssss == False:
+            self.toggle_sound(0)
+            self.sound_previous_state = True
+        elif ui.enable_sound.get_state() == False and self.sound_previous_state == True:
+            self.toggle_sound(0.3)
+            self.sound_previous_state = False
+        else:
+            pass
+        if self.damaged:
+            try:
+                self.image.fill((255, 255, 255, next(self.damage_alpha)), special_flags=pg.BLEND_RGBA_MULT)
+            except:
+                self.damaged = False
 
 
     def move_rect(self, x, y):
         self.pos.x = x
         self.pos.y = y
 
+    def pass_events(self, events):
+        self.events = events
+
     def get_keys(self):
 
         if self.debug:
             print("getting_keys")
 
-        for event in pygame.event.get():
+        for event in self.events:
             self.vel = vec(0,0)
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -261,6 +293,20 @@ class Player(pygame.sprite.Sprite):
                 if event.key == pygame.K_r:
                     self.reload()
 
+    def toggle_sound(self, x):
+        self.weapon_sounds = {}
+        for weapon in settings.WEAPON_SOUNDS:
+            self.weapon_sounds[weapon] = []
+            for snd in settings.WEAPON_SOUNDS[weapon]:
+                s = pygame.mixer.Sound(snd)
+                s.set_volume(x)
+                self.weapon_sounds[weapon].append(s)
+        t = './sounds/shells.wav'
+        pygame.mixer.Sound(t).set_volume(x)
+        self.effects_sounds = {}
+        for type in settings.EFFECTS_SOUNDS:
+            self.effects_sounds[type] = pygame.mixer.Sound(settings.EFFECTS_SOUNDS[type])
+            self.effects_sounds[type].set_volume(x)
 
 
 
@@ -271,9 +317,9 @@ class Player(pygame.sprite.Sprite):
             self.reloading = True
             while self.current_ammo != self.ammo_max:
                 if (pygame.time.get_ticks() - self.reload_tick) >= 250:
-                    s = pygame.mixer.Sound('./sounds/shells.wav')
-                    s.set_volume(0.3)
-                    s.play()
+                    t = './sounds/shells.wav'
+                    u = pygame.mixer.Sound(t)
+                    u.play()
 
                     self.current_ammo += 1
                     self.walkcount = 1
@@ -326,38 +372,51 @@ class Player(pygame.sprite.Sprite):
 
 
 
+
+
 class Enemy(pygame.sprite.Sprite):
 
-    def __init__(self, x, y, enemy_Sprite_Group, screen, player):
-        print(x)
-        print(y)
+    def __init__(self, x, y, enemy_Sprite_Group, screen, player, walls, dt, camcam, all_sprites):
+        self.all_sprites = all_sprites
+        self.camcam = camcam
+        self.walls = walls
+        self.dt = dt
         self.player = player
+        self.enemies = enemy_Sprite_Group
         self.screen = screen
         self.enemy_Sprite_Group = enemy_Sprite_Group
-        self.groups = self.enemy_Sprite_Group
+        self.groups = self.enemy_Sprite_Group, self.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
-        self.x = x
-        self.y = y
-        self.cur_pos = (x,y)
+        self.orig_image = get_image("character_frames/enemy_knife.png")
+        self.image = self.orig_image
+        self.rect = self.image.get_rect()
+
+        self.pos = vec(x, y)
+
+        self.vel = vec(0,0)
+        self.acc = vec(0,0)
+        self.rect.center = self.pos
+        self.rot = 0
+
+
+
+
         self.bullets = []
         self.walkcount = 0
-        self.player_frame = get_image("character_frames/enemy_knife.png")
-        self.image = self.player_frame
-        self.rect = self.image.get_rect()
-        self.hit_rect = self.rect
-        self.rect.x = self.x
-        self.rect.y = self.y
-        self.pos = self.cur_pos
+        self.hit_rect = settings.MOB_HIT_RECT.copy()
+        self.hit_rect.center = self.rect.center
+
         # self.frames = self.load_frames()
-        self.health = 100
-        self.speed = 20
+        self.health = settings.MOB_HEALTH
+        self.speed = choice(settings.MOB_SPEEDS)
         self.accelerate = pygame.math.Vector2(0, 0)
         self.hit_target_tick = pygame.time.get_ticks()
         self.hit_player = False
-        self.direction = pygame.math.Vector2(0, 0)
 
+        self.target = self.player
+        self.splat = get_image(settings.SPLAT)
 
-    def health_bar(self, camcam):
+    def health_bar(self):
 
         if self.health > 75:
             self.health_color = GREEN
@@ -367,8 +426,8 @@ class Enemy(pygame.sprite.Sprite):
             self.health_color = ORANGE
         elif self.health > 0 and self.health < 25:
             self.health_color = RED
+        self.applied = self.camcam.apply_rect(self.rect)
 
-        self.applied = camcam.apply_rect(self.rect)
 
         # The Healthbar
         pygame.draw.line(self.screen, self.health_color, (self.applied.x, self.applied.y - 15),
@@ -388,58 +447,47 @@ class Enemy(pygame.sprite.Sprite):
         # RIGHT
         pygame.draw.line(self.screen, BLACK, (self.applied.x + self.image.get_width() + 1, self.applied.y - 18),
                          (self.applied.x + self.image.get_width() + 1, self.applied.y - 12), 2)
-    def clamp_movement(self):
-        if self.rect[0] >= 1280 - self.player_frame.get_width() - 50:
-            self.rect[0] = 1280 - self.player_frame.get_width() - 50
-        if self.rect[0] <= 50:
-            self.rect[0] = 50
-        if self.rect[1] >= 960 - self.player_frame.get_height() - 50:
-            self.rect[1] = 960 - self.player_frame.get_height() - 50
-        if self.rect[1] <= 50:
-            self.rect[1] = 50
+
 
 
     def draw(self):
-        self.screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
+        self.screen.blit(self.image, self.rect)
         if ui.show_healthbar.get_state():
             self.health_bar()
 
     def update(self):
+        target_dist = self.target.pos - self.pos
+        if target_dist.length_squared() < settings.DETECT_RADIUS ** 2:
+            #if random() < 0.002:
+            #    choice(self.game.zombie_moan_sounds).play()
+            self.rot = target_dist.angle_to(vec(1, 0))
+            self.image = pygame.transform.rotate(self.orig_image, self.rot)
+            self.rect.center = self.pos
+            self.acc = vec(1, 0).rotate(-self.rot)
+            self.avoid_mobs()
+            self.acc.scale_to_length(self.speed)
+            self.acc += self.vel * -1
+            self.vel += self.acc * self.dt
+            self.pos += (self.vel * self.dt) + (0.5 * self.acc * self.dt ** 2)
+            self.hit_rect.centerx = self.pos.x
+            collide_with_walls(self, self.walls, 'x')
+            self.hit_rect.centery = self.pos.y
+            collide_with_walls(self, self.walls, 'y')
+            self.rect.center = self.hit_rect.center
         if self.health <= 0:
-            self.health = 0
+            #choice(self.game.zombie_hit_sounds).play()
             self.kill()
-            print("should be dead")
+            #self.map_img.blit(self.splat, self.pos - vec(32, 32))
 
-
-        self.direction = (pygame.math.Vector2() - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
-            pygame.math.Vector2(1, 0))
-
-        self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
-        if not self.player.dead:
-            self.accelerate = pygame.math.Vector2(self.speed, 0).rotate(-self.direction)
-        else:
-            self.accelerate = pygame.math.Vector2(0, 0)
-        #self.rect += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
-        self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
-
-
-        self.clamp_movement()
+    def avoid_mobs(self):
+        for mob in self.enemies:
+            if mob != self:
+                dist = self.pos - mob.pos
+                if 0 < dist.length() < settings.AVOID_RADIUS:
+                    self.acc += dist.normalize()
 
     def health_hit(self, amt):
         self.health -= amt
-        print(self.health)
-
-    def draw_health(self):
-        if self.health > 60:
-            col = settings.GREEN
-        elif self.health > 30:
-            col = settings.YELLOW
-        else:
-            col = settings.RED
-        width = int(self.rect.width * self.health / settings.MOB_HEALTH)
-        self.health_bar = pygame.Rect(0, 0, width, 7)
-        if self.health < settings.MOB_HEALTH:
-            pygame.draw.rect(self.image, col, self.health_bar)
 
 class Projectile(pygame.sprite.Sprite):
     """
@@ -568,3 +616,8 @@ class MuzzleFlash(pygame.sprite.Sprite):
     def update(self):
         if pygame.time.get_ticks() - self.spawn_time > settings.FLASH_DURATION:
             self.kill()
+
+#todo add a counter class with number of enemies left
+#todo hook the ui into the random encounters encounter
+#todo make 3 more quick levels for the random encounters
+#todo make a few more scenarios...
