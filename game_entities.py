@@ -7,6 +7,8 @@ import settings
 from settings import *
 from tilemap import collide_hit_rect
 import ui_components as ui
+import pytweening as tween
+from itertools import chain
 
 # Define colors
 BLACK = (0, 0, 0)
@@ -115,6 +117,8 @@ class Player(pygame.sprite.Sprite):
         self.pressed_right = False
         self.pressed_up = False
         self.pressed_down = False
+        self.debug = False
+        self.update_settings()
 
         pygame.key.set_repeat(10,10)
         # Sound loading
@@ -142,7 +146,7 @@ class Player(pygame.sprite.Sprite):
             self.damage = 25
             self.health = 50
 
-    def health_bar(self):
+    def health_bar(self,camcam):
 
         if self.health > 75:
             self.health_color = GREEN
@@ -152,36 +156,45 @@ class Player(pygame.sprite.Sprite):
             self.health_color = ORANGE
         elif self.health > 0 and self.health < 25:
             self.health_color = RED
+        self.applied = camcam.apply_rect(self.rect)
 
-        pygame.draw.line(self.screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 10),
-                         (self.cur_pos[0] + self.player_frames[0].get_width() * (self.health / 100),
-                          self.cur_pos[1] - 10), 5)
+        # The Healthbar
+        pygame.draw.line(self.screen, self.health_color, (self.applied.x, self.applied.y - 15),
+                         (self.applied.x + self.image.get_width() * (self.health / 100), self.applied.y - 15),
+                         5)
 
         # Healthbar outline
         # TOP
-        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 14),
-                         (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x, self.applied.y - 18),
+                         (self.applied.x + self.image.get_width() + 1, self.applied.y - 18), 2)
         # BOTTOM
-        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 8),
-                         (self.cur_pos[0] + self.player_frames[0].get_width() + 2, self.cur_pos[1] - 8), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x - 2, self.applied.y - 12),
+                         (self.applied.x + self.image.get_width() + 2, self.applied.y - 12), 2)
         # LEFT
-        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 14),
-                         (self.cur_pos[0] - 2, self.cur_pos[1] - 8), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x - 2, self.applied.y - 18),
+                         (self.applied.x - 2, self.applied.y - 12), 2)
         # RIGHT
-        pygame.draw.line(self.screen, BLACK, (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 14),
-                         (self.cur_pos[0] + self.player_frames[0].get_width() + 1, self.cur_pos[1] - 8), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x + self.image.get_width() + 1, self.applied.y - 18),
+                         (self.applied.x + self.image.get_width() + 1, self.applied.y - 12), 2)
 
     def load_frames(self):
         self.player_frames.append(get_image("character_frames/character_main.png"))
         self.player_frames.append(get_image("character_frames/character_reload.png"))
 
+    def hit(self):
+        self.damaged = True
+        self.damage_alpha = chain(settings.DAMAGE_ALPHA * 4)
 
     def ammo_reload_toggle(self, state):
         self.ammo_reload = state
 
     def update(self):
+
         self.get_keys()
         self.ammo_reload_toggle(ui.auto_reload.get_state())
+        if self.debug:
+            print("...updating...")
+            print("ammo_reload checked")
         if self.health <= 0:
             self.health = 0
 
@@ -191,51 +204,57 @@ class Player(pygame.sprite.Sprite):
         else:
             self.dead = True
 
-        if self.health > 75:
-            self.health_color = GREEN
-        elif self.health > 45 and self.health < 75:
-            self.health_color = YELLOW
-        elif self.health > 25 and self.health < 45:
-            self.health_color = ORANGE
-        elif self.health > 0 and self.health < 25:
-            self.health_color = RED
         if self.auto_reload == True and self.current_ammo == 0:
             self.reload()
 
         self.actions()
+
+
 
     def move_rect(self, x, y):
         self.pos.x = x
         self.pos.y = y
 
     def get_keys(self):
-        events = pygame.event.get()
 
-        for event in events:
+        if self.debug:
+            print("getting_keys")
+
+        for event in pygame.event.get():
             self.vel = vec(0,0)
             if event.type == pygame.QUIT:
                 sys.exit()
-            elif event.type == pygame.KEYDOWN:  # check for key presses
+            if event.type == pygame.KEYDOWN:  # check for key presses
+                if event.key == pygame.K_h:
+                    self.debug = not self.debug
                 if event.key == pygame.K_LEFT or event.key == pygame.K_a:  # left arrow turns left
                     self.vel = pygame.math.Vector2(-settings.PLAYER_SPEED, 0)
                     self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 180)
                     self.barrel_Offset = (-25, -10)
                     self.dir_facing = 180
+                    if self.debug:
+                        print("going left")
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_d:  # right arrow turns right
                     self.vel = pygame.math.Vector2(settings.PLAYER_SPEED, 0)
                     self.image = self.player_frames[self.walkcount]
                     self.barrel_Offset = (25, 10)
                     self.dir_facing = 0
+                    if self.debug:
+                        print("going right")
                 if event.key == pygame.K_UP or event.key == pygame.K_w:  # up arrow goes up
                     self.vel = pygame.math.Vector2(0, -settings.PLAYER_SPEED)
                     self.image = pygame.transform.rotate(self.player_frames[self.walkcount], 90)
                     self.barrel_Offset = (10, -25)
                     self.dir_facing = 270
+                    if self.debug:
+                        print('going up')
                 if event.key == pygame.K_DOWN or event.key == pygame.K_s:  # down arrow goes down
                     self.vel = pygame.math.Vector2(0, settings.PLAYER_SPEED)
                     self.image = pygame.transform.rotate(self.player_frames[self.walkcount], -90)
                     self.barrel_Offset = (-10, 25)
                     self.dir_facing = 90
+                    if self.debug:
+                        print("going down")
                 if event.key == pygame.K_SPACE:
                     self.shoot()
 
@@ -266,6 +285,8 @@ class Player(pygame.sprite.Sprite):
 
 
     def actions(self):
+        if self.debug:
+            print("getting actions")
 
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
@@ -277,6 +298,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.hit_rect.center
 
     def shoot(self):
+        if self.debug:
+            print("shooting..")
         if (pygame.time.get_ticks() - self.fired_tick) >= 500:
             self.fired_tick = pygame.time.get_ticks()
             if self.current_ammo > 0:
@@ -289,22 +312,25 @@ class Player(pygame.sprite.Sprite):
                 if snd.get_num_channels() > 2:
                     snd.stop()
                 snd.play()
-                print("Current_ammo " + str(self.current_ammo))
-                print("Auto reload set to " + str(self.auto_reload))
-                print("auto reload box set to " + str(self.ammo_reload_toggle(ui.auto_reload.get_state())))
-                if self.current_ammo == 0 and self.auto_reload == True:
-                    reload()
+                if self.debug:
+                    print("Current_ammo " + str(self.current_ammo))
+                    print("Auto reload set to " + str(self.auto_reload))
+                    print("auto reload box set to " + str(self.ammo_reload_toggle(ui.auto_reload.get_state())))
+            if self.current_ammo == 0 and self.auto_reload == True:
+                reload()
 
 
     def draw(self):
-        ui.show_healthbar.get_state()
-        if show_healthbar == True:
+        if ui.show_healthbar.get_state():
             self.health_bar()
+
 
 
 class Enemy(pygame.sprite.Sprite):
 
     def __init__(self, x, y, enemy_Sprite_Group, screen, player):
+        print(x)
+        print(y)
         self.player = player
         self.screen = screen
         self.enemy_Sprite_Group = enemy_Sprite_Group
@@ -319,6 +345,9 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.player_frame
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect
+        self.rect.x = self.x
+        self.rect.y = self.y
+        self.pos = self.cur_pos
         # self.frames = self.load_frames()
         self.health = 100
         self.speed = 20
@@ -327,7 +356,8 @@ class Enemy(pygame.sprite.Sprite):
         self.hit_player = False
         self.direction = pygame.math.Vector2(0, 0)
 
-    def health_bar(self, screen):
+
+    def health_bar(self, camcam):
 
         if self.health > 75:
             self.health_color = GREEN
@@ -338,25 +368,26 @@ class Enemy(pygame.sprite.Sprite):
         elif self.health > 0 and self.health < 25:
             self.health_color = RED
 
+        self.applied = camcam.apply_rect(self.rect)
+
         # The Healthbar
-        pygame.draw.line(screen, self.health_color, (self.cur_pos[0], self.cur_pos[1] - 15),
-                         (self.cur_pos[0] + self.player_frame.get_width() * (self.health / 100), self.cur_pos[1] - 15),
+        pygame.draw.line(self.screen, self.health_color, (self.applied.x, self.applied.y - 15),
+                         (self.applied.x + self.image.get_width() * (self.health / 100), self.applied.y - 15),
                          5)
 
         # Healthbar outline
         # TOP
-        pygame.draw.line(screen, BLACK, (self.cur_pos[0], self.cur_pos[1] - 18),
-                         (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x, self.applied.y - 18),
+                         (self.applied.x + self.image.get_width() + 1, self.applied.y - 18), 2)
         # BOTTOM
-        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 12),
-                         (self.cur_pos[0] + self.player_frame.get_width() + 2, self.cur_pos[1] - 12), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x - 2, self.applied.y - 12),
+                         (self.applied.x + self.image.get_width() + 2, self.applied.y - 12), 2)
         # LEFT
-        pygame.draw.line(screen, BLACK, (self.cur_pos[0] - 2, self.cur_pos[1] - 18),
-                         (self.cur_pos[0] - 2, self.cur_pos[1] - 12), 2)
+        pygame.draw.line(self.screen, BLACK, (self.applied.x - 2, self.applied.y - 18),
+                         (self.applied.x - 2, self.applied.y - 12), 2)
         # RIGHT
-        pygame.draw.line(screen, BLACK, (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 18),
-                         (self.cur_pos[0] + self.player_frame.get_width() + 1, self.cur_pos[1] - 12), 2)
-
+        pygame.draw.line(self.screen, BLACK, (self.applied.x + self.image.get_width() + 1, self.applied.y - 18),
+                         (self.applied.x + self.image.get_width() + 1, self.applied.y - 12), 2)
     def clamp_movement(self):
         if self.rect[0] >= 1280 - self.player_frame.get_width() - 50:
             self.rect[0] = 1280 - self.player_frame.get_width() - 50
@@ -367,31 +398,36 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect[1] <= 50:
             self.rect[1] = 50
 
-    def collision_check(self):
-        if self.rect[0] >= self.player.rect.x and self.rect[0] <= self.player.rect.x + self.player.image.get_width():
-            if self.rect[1] >= self.player.rect.y and self.rect[1] <= self.player.rect.y + self.player.image.get_height() and (
-                    pygame.time.get_ticks() - self.hit_target_tick) >= 500:
-                self.hit_target_tick = pygame.time.get_ticks()
-                self.hit_player = True
 
     def draw(self):
+        self.screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
+        if ui.show_healthbar.get_state():
+            self.health_bar()
+
+    def update(self):
         if self.health <= 0:
             self.health = 0
+            self.kill()
+            print("should be dead")
 
-        if self.health > 0:
-            self.direction = (pygame.math.Vector2() - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
-                pygame.math.Vector2(1, 0))
-            self.screen.blit(pygame.transform.rotate(self.player_frame, self.direction), self.rect)
-            self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
-            if not self.player.dead:
-                self.accelerate = pygame.math.Vector2(self.speed, 0).rotate(-self.direction)
-            else:
-                self.accelerate = pygame.math.Vector2(0, 0)
-            #self.rect += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
-            self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
 
-            self.collision_check()
-            self.clamp_movement()
+        self.direction = (pygame.math.Vector2() - pygame.math.Vector2(self.rect.x, self.rect.y)).angle_to(
+            pygame.math.Vector2(1, 0))
+
+        self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
+        if not self.player.dead:
+            self.accelerate = pygame.math.Vector2(self.speed, 0).rotate(-self.direction)
+        else:
+            self.accelerate = pygame.math.Vector2(0, 0)
+        #self.rect += self.accelerate * fps + (self.speed * 80) * self.accelerate * fps ** 2
+        self.player_frame.get_rect().center = pygame.math.Vector2(self.rect.x, self.rect.y)
+
+
+        self.clamp_movement()
+
+    def health_hit(self, amt):
+        self.health -= amt
+        print(self.health)
 
     def draw_health(self):
         if self.health > 60:

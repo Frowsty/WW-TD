@@ -18,6 +18,8 @@ import os
 from os import path
 import map_logic
 
+vec = pygame.math.Vector2
+
 # initializers
 if __name__ == 'main':
     pygame.init()
@@ -69,7 +71,9 @@ Map_Shown = False
 
 # Set window title
 pygame.display.set_caption("WW - TD")
-
+player_hit_sounds = []
+for snd in settings.PLAYER_HIT_SOUNDS:
+    player_hit_sounds.append(pygame.mixer.Sound(snd))
 
 # Define Clock
 clock = pygame.time.Clock()
@@ -234,7 +238,7 @@ def start_town(mouse_x, mouse_y):
                         player.health += 30
                     powerup_list.pop(powerup_list.index(powerup))
 
-
+    camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
     for tile_object in tile_of_map.tmxdata.objects:
         obj_center = pygame.math.Vector2(tile_object.x + tile_object.width / 2,
                          tile_object.y + tile_object.height / 2)
@@ -243,11 +247,11 @@ def start_town(mouse_x, mouse_y):
         if tile_object.name == 'map':
             entities.Objective(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, objective_Group)
+        if tile_object.name == 'enemy':
+            entities.Enemy(obj_center.x, obj_center.y, enemy_Sprite_Group , screen, player)
         if tile_object.name == 'wall':
             entities.Obstacle(tile_object.x, tile_object.y,
                      tile_object.width, tile_object.height, walls_Group)
-    camcam = camera.Camera(tile_of_map.width, tile_of_map.height)
-
 
     while encounter:
         screen.fill((0, 0, 0))
@@ -255,11 +259,10 @@ def start_town(mouse_x, mouse_y):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         keyboard_input = pygame.key.get_pressed()
 
-        fps = clock.tick(60) / 1000.0
-
 
         camcam.update(player)
         all_Sprite_Group.update()
+        enemy_Sprite_Group.update()
         player.ammo_reload_toggle(ui.auto_reload.get_state())
 
 
@@ -268,25 +271,36 @@ def start_town(mouse_x, mouse_y):
 
         #ammo_font and screen are passed in on creation
 
-
         for sprite in all_Sprite_Group:
             screen.blit(sprite.image, camcam.apply(sprite))
+            if ui.show_healthbar.get_state():
+                sprite.health_bar(camcam)
+        for sprite in enemy_Sprite_Group:
+            screen.blit(sprite.image, camcam.apply(sprite))
+            if ui.show_healthbar.get_state():
+                sprite.health_bar(camcam)
+
+
+
+
+
+
 
         #enemy hits player
         hits = pygame.sprite.spritecollide(player, enemies, False, collide_hit_rect)
         for hit in hits:
-            if random < 0.7:
-                choice(self.player_hit_sounds).play()
-            self.player.health -= settings.MOB_DAMAGE
+            if random.random() < 0.7:
+                random.choice(player_hit_sounds).play()
+            player.health -= settings.MOB_DAMAGE
             hit.vel = vec(0,0)
         if hits:
-            self.player.hit()
-            player.rect += pygame.math.Vector2(75, 0).rotate(-hit.direction)
+            player.hit()
+            player.pos += pygame.math.Vector2(75, 0).rotate(-hit.direction)
         #bullets hit enemys
         hits = pygame.sprite.groupcollide(enemies, projectile_Group, False, True)
         for enemy in hits:
             for bullet in hits[enemy]:
-                enemy.health -= bullet.damage
+                enemy.health_hit(bullet.damage)
             enemy.vel = vec(0,0)
 
         hits = pygame.sprite.spritecollide(player, objective_Group, False, collide_hit_rect)

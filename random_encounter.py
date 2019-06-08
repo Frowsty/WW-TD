@@ -56,10 +56,7 @@ class random_Encounter():
 
 
     def loop(self):
-        ammo_font = pygame.font.SysFont("Arial", 30)
-        clock = pygame.time.Clock()
-        font = pygame.font.SysFont("Arial", 20)
-        shell_img = get_image_convert_alpha("pictures/shell.png")
+
         while self.looping:
             pygame.event.get()
             self.screen.fill((0,0,0))
@@ -96,33 +93,27 @@ class random_Encounter():
         self.encounter = True
         self.camcam = camera.Camera(self.map.width, self.map.height)
         pygame.event.clear()
+        self.player.debug = True
+
 
         while self.encounter:
+            self.screen.fill((0, 0, 0))
             #updates and keyinput
-            events = pygame.event.get()
 
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            for event in events:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_h:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_j:
                         self.draw_debug = not self.draw_debug
 
-            fps = clock.tick(60) / 1000.0
-            self.all_Sprite_Group.update()
-            self.camcam.update(self.player)
-            #draw
-            self.screen.fill((0, 0, 0))
-            self.screen.blit(self.map_img, self.camcam.apply(self.map))
-            ui.ingame_interface(self.screen, mouse_x, mouse_y, self.player.current_ammo, ammo_font, font, clock, shell_img)
-            self.player.ammo_reload_toggle(ui.auto_reload.get_state())
-            for sprite in self.all_Sprite_Group:
-                self.screen.blit(sprite.image, self.camcam.apply(sprite))
-            for sprite in self.enemies:
-                self.screen.blit(sprite.image, self.camcam.apply(sprite))
-            if self.draw_debug:
-                for wall in self.walls:
-                    pygame.draw.rect(self.screen, settings.PURPLE, self.camcam.apply_rect(wall.rect), 2)
 
+            for sprite in self.enemies:
+                self.camcam.update(sprite)
+
+            self.camcam.update(self.player)
+            self.enemies.update()
+            self.player.update()
+            self.player.ammo_reload_toggle(ui.auto_reload.get_state())
+
+            self.draw()
 
             #collision detection
             # enemy hits player
@@ -150,6 +141,8 @@ class random_Encounter():
 
 
             pygame.display.flip()
+            if self.draw_debug:
+                print("flipping the display")
             pygame.time.Clock().tick(60)
 
 
@@ -173,13 +166,26 @@ class random_Encounter():
         pass
 
     def draw(self):
-        #todo add camera class, then add $, self.camera.apply_rect(self.map_rect)$ to the variable below
-        self.screen.blit(self.map_img, (0,0))
+        # draw
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        ammo_font = pygame.font.SysFont("Arial", 30)
+        clock = pygame.time.Clock()
+        font = pygame.font.SysFont("Arial", 20)
+        shell_img = get_image_convert_alpha("pictures/shell.png")
+        self.screen.blit(self.map_img, self.camcam.apply(self.map))
+        ui.ingame_interface(self.screen, mouse_x, mouse_y, self.player.current_ammo, ammo_font, font, clock, shell_img)
 
-
+        for sprite in self.all_Sprite_Group:
+            self.screen.blit(sprite.image, self.camcam.apply(sprite))
+        for sprite in self.enemies:
+            self.screen.blit(sprite.image, self.camcam.apply(sprite))
         for sprite in self.player_group:
-            self.screen.blit(sprite.image, self.camera.apply(sprite))
+            self.screen.blit(sprite.image, self.camcam.apply(sprite))
 
+
+        if self.draw_debug:
+            for wall in self.walls:
+                pygame.draw.rect(self.screen, settings.PURPLE, self.camcam.apply_rect(wall.rect), 2)
 
 
 
