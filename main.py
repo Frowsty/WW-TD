@@ -151,7 +151,7 @@ powerup_tick = pygame.time.get_ticks()
 powerup_list = []
 menu_input = ""
 
-intro = entities.Text_box('./text/instructions.json', screen)
+intro = entities.Text_Box('./text/instruction.json', screen)
 
 
 def Map_screen():
@@ -320,7 +320,7 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
-        screen.blit(counter.image, camcam.apply(counter))
+        
 
         for sprite in pickup_Effect_Group:
             print(sprite.image)
