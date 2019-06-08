@@ -185,7 +185,8 @@ def load_map():
 def start_town(mouse_x, mouse_y):
 
     global walls_Group, enemey_Sprite_Group, powerup_tick, previous_state, dt
-
+    pygame.mixer.music.load('./sounds/12th_Street_Rag_1919.ogg')
+    pygame.mixer.music.play(-1)
     enemies = enemy_Sprite_Group
 
     tile_of_map, map_img, map_rect = load_map()
@@ -315,6 +316,7 @@ def start_town(mouse_x, mouse_y):
                     sprite.health_bar(camcam)
             except:
                 pass
+        screen.blit(counter.image, camcam.apply(counter.image))
 
         for sprite in pickup_Effect_Group:
             print(sprite.image)

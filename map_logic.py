@@ -236,6 +236,9 @@ class map_Player_Icon(pygame.sprite.Sprite):
     def update(self, screen):
 
         if self.moving == True:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load('./sounds/')
+            pygame.mixer.music.play()
             #vector pointing to the target
             heading = self.target - self.pos
             #distance to target

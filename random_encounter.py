@@ -86,12 +86,12 @@ class random_Encounter():
 
         self.select_map()
         self.select_encounter()
-        #todo make this randomly selected with multiple scenarios
+
 
 
 
     def select_map(self):
-        available_maps = ['./tilesets/random1.tmx', './tilesets/random2.tmx']
+        available_maps = ['./tilesets/random1.tmx', './tilesets/random2.tmx', './tilesets/random3.tmx']
         self.load_map(random.choice(available_maps))
 
     def load_map(self, filename):
@@ -103,13 +103,14 @@ class random_Encounter():
 
 
     def select_encounter(self):
-        scenarios = [Scenario1, Scenario2]
-        scene = random.choice(scenarios)
+        scenarios = {'attack': Scenario1, 'tip': Scenario2, 'wheel': Scenario3}
+
+        scene = scenarios[self.type]
 
         self.scenario = scene(self.map, self.map_img, self.player,
                         self.objective_group, self.walls, self.all_Sprite_Group,
                         self.enemies, self.projectile_group, self.screen, self.dt,
-                        self.player_group)
+                        self.player_group, self.type)
 
         pass
 
@@ -124,8 +125,9 @@ class random_Encounter():
 
 class Scenario1():
     def __init__(self, map, map_img, player, objective_group, walls, all_sprite_group, enemies, projectile,
-                 screen, dt, player_group):
+                 screen, dt, player_group, type):
         print("defend the wagon")
+        self.type = type
         #passed through variables
         self.player_group = player_group
         self.objective_group = objective_group
@@ -156,6 +158,8 @@ class Scenario1():
 
     def load_map(self):
         #setting up the map
+
+        self.text_box = entities.Text_Box('./text/.json', self.screen)
         for sprite in self.enemies:
             sprite.kill()
 
@@ -271,6 +275,7 @@ class Scenario1():
                     sprite.health_bar(self.camcam)
             except:
                 pass
+        self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
         self.player.draw()
         for sprite in self.enemies:
             self.screen.blit(sprite.image, self.camcam.apply(sprite))
@@ -288,8 +293,9 @@ class Scenario1():
 
 class Scenario2():
     def __init__(self, map, map_img, player, objective_group, walls, all_sprite_group, enemies, projectile,
-                 screen, dt, player_group):
+                 screen, dt, player_group, type):
         #passed through variables
+        self.type
         print("Collect the items")
         self.player_group = player_group
         self.objective_group = objective_group
@@ -320,6 +326,7 @@ class Scenario2():
 
     def load_map(self):
         #setting up the map
+        self.text_box = entities.Text_Box('./text/lost_items.json', self.screen)
         self.camcam = camera.Camera(self.map.width, self.map.height)
         self.player.in_camera(self.camcam)
 
@@ -427,6 +434,7 @@ class Scenario2():
                     sprite.health_bar(self.camcam)
             except:
                 pass
+        self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
         self.player.draw()
         for sprite in self.player.item_group:
             self.screen.blit(sprite.image, self.camcam.apply(sprite))
@@ -437,11 +445,12 @@ class Scenario2():
                 pygame.draw.rect(self.screen, settings.PURPLE, self.camcam.apply_rect(wall.rect), 2)
 
 
-class Scenario2():
+class Scenario3():
     def __init__(self, map, map_img, player, objective_group, walls, all_sprite_group, enemies, projectile,
-                 screen, dt, player_group):
+                 screen, dt, player_group, type):
+        self.type = type
         #passed through variables
-        print("Collect the items")
+        print("Collect the scrap")
         self.player_group = player_group
         self.objective_group = objective_group
         self.projectile_group = projectile
@@ -465,12 +474,13 @@ class Scenario2():
         self.ammo_font = pygame.font.SysFont("Arial", 30)
         self.clock = pygame.time.Clock()
         self.shell_img = get_image_convert_alpha("pictures/shell.png")
-        self.player.reload('silent')
+
         #load map
         self.load_map()
 
     def load_map(self):
         #setting up the map
+        self.text_box('./text/wagon_wheel.json')
         self.camcam = camera.Camera(self.map.width, self.map.height)
         self.player.in_camera(self.camcam)
 
@@ -480,7 +490,7 @@ class Scenario2():
                                              tile_object.y + tile_object.height / 2)
             if tile_object.name == 'player':
                 self.player.move_rect(obj_center.x, obj_center.y)
-            if tile_object.name == 'food':
+            if tile_object.name == 'scrap':
                 self.max_num_items += 1
             if tile_object.name == 'map':
                 entities.Objective(tile_object.x, tile_object.y,
@@ -501,15 +511,10 @@ class Scenario2():
                 break
             else:
                 self.num_of_items -= 1
-                if tile_object.name == 'food':
-                    entities.food(obj_center.x, obj_center.y, self.enemies, self.screen, self.player, self.walls,
+                if tile_object.name == 'scrap':
+                    entities.scrap(obj_center.x, obj_center.y, self.enemies, self.screen, self.player, self.walls,
                                    self.dt,
                                    self.camcam, self.all_Sprite_Group, self.counter, self.player.item_group)
-
-            hits = pygame.sprite.spritecollide(self.player, self.objective_group, False, collide_hit_rect)
-            if hits:
-                if len(self.enemies) < 1:
-                    break
 
         pygame.event.clear()
         self.player.vel = pygame.math.Vector2(0, 0)
@@ -578,6 +583,7 @@ class Scenario2():
                     sprite.health_bar(self.camcam)
             except:
                 pass
+        self.screen.blit(self.counter.image, self.camcam.apply(self.counter.image))
         self.player.draw()
         for sprite in self.player.item_group:
             self.screen.blit(sprite.image, self.camcam.apply(sprite))

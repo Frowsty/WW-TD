@@ -633,10 +633,10 @@ class MuzzleFlash(pygame.sprite.Sprite):
         if pygame.time.get_ticks() - self.spawn_time > settings.FLASH_DURATION:
             self.kill()
 
-#todo add a counter class with number of enemies left
-#todo hook the ui into the random encounters encounter
-#todo make 3 more quick levels for the random encounters
-#todo make a few more scenarios...
+
+
+
+
 class Counter(pygame.sprite.Sprite):
     def __init__(self, count, all_sprite):
         self.count = count
@@ -763,39 +763,45 @@ class Text_Box():
     def open_text(self):
         self.text_array = []
         with open(self.text_file, 'r') as file:
-            dict = json.load(file)
+            self.this_dict = json.load(file)
 
 
-        self.title = dict['title']
-        self.page1 = dict['page1']
+        self.title = self.this_dict['title']
+        self.page1 = self.this_dict['page1']
         self.text_array.append(self.page1)
         try:
-            self.page2 = dict['page2']
+            self.page2 = self.this_dict['page2']
             self.text_array.append(self.page2)
-        except:
-            pass
-        try:
-            self.page3 = dict['page3']
-            self.text_array.append(self.page3)
             try:
-                self.page3_3 = dict['page3.3']
-                print(self.page3_3)
+                self.page3 = self.this_dict['page3']
+                self.text_array.append(self.page3)
+
+                try:
+                    self.page3_3 = self.this_dict['page3.3']
+                except:
+                    pass
+
+                try:
+                    self.page4 = self.this_dict['page4']
+                    self.text_array.append(self.page4)
+                    try:
+                        self.enter_prompt_4 =  "Press Enter to continue..."
+                    except:
+                        print("passing on enter 4")
+                        pass
+                except:
+                    print("no page4")
+                    self.enter_prompt_3 = "Press Enter to continue..."
+                    print(self.enter_prompt_3)
             except:
-                print("Passing on pulling 3.3")
-                pass
+                self.enter_prompt_2 = "Press Enter to continue..."
+        except:
             try:
-                self.page3_2 = dict['page3.2']
-                print(self.page3_2)
+                self.enter_prompt_1 = "Press Enter to continue..."
             except:
-                print("passing on pulling 3.2")
-                pass
-        except:
-            pass
-        try:
-            self.page4 = dict['page4']
-            self.text_array.append(self.page4)
-        except:
-            pass
+                print('no enters')
+
+
 
 
 
@@ -834,10 +840,24 @@ class Text_Box():
             text = self.font.render(self.page1, True, settings.BLACK)
             self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
             self.screen.blit(text, (self.text_x, self.text_y))
+            try:
+                text = self.font.render(self.enter_prompt_1, True, settings.BLACK)
+                self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+                self.enter_text_y = (settings.SCREEN_HEIGHT//2) + (self.height // 2) - 50
+                self.screen.blit(text, (self.text.x, self.enter_text_y))
+            except:
+                pass
         if page == 2:
             text = self.font.render(self.page2, True, settings.BLACK)
             self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
             self.screen.blit(text, (self.text_x, self.text_y))
+            try:
+                text = self.font.render(self.enter_prompt_2, True, settings.BLACK)
+                self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+                self.enter_text_y = (settings.SCREEN_HEIGHT//2) + (self.height // 2) - 50
+                self.screen.blit(text, (self.text.x, self.enter_text_y))
+            except:
+                pass
         if page == 3:
             text = self.font.render(self.page3, True, settings.BLACK)
             self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
@@ -849,16 +869,24 @@ class Text_Box():
             except:
                 pass
             try:
-                text = self.font.render(self.page3_2, True, settings.BLACK)
+                text = self.font.render(self.enter_prompt_3, True, settings.BLACK)
                 self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
-                self.3_2_y = (settings.SCREEN_HEIGHT//2) + (self.image.get_height() // 2) - 50
-                self.screen.blit(text, (self.text.x, self.3_2_y))
+                self.enter_text_y = (settings.SCREEN_HEIGHT//2) + (self.height // 2) - 50
+                self.screen.blit(text, (self.text_x, self.enter_text_y))
             except:
+                print("no enter_prompt on page 3")
                 pass
         if page == 4:
             text = self.font.render(self.page4, True, settings.BLACK)
             self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width // 2
             self.screen.blit(text, self.header_loc)
+            try:
+                text = self.font.render(self.enter_prompt_4, True, settings.BLACK)
+                self.text_x = (settings.SCREEN_WIDTH // 2) - text.get_width() // 2
+                self.enter_text_y = (settings.SCREEN_HEIGHT//2) + (self.height // 2) - 50
+                self.screen.blit(text, (self.text.x, self.enter_text_y))
+            except:
+                pass
 
     def fade_out(self):
         fade = pygame.Surface((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
@@ -907,5 +935,44 @@ class Text_Box():
             # Go ahead and update the screen with what we've drawn.
             pygame.display.flip()
         self.fade_in
+
+
+class scrap(pygame.sprite.Sprite):
+    def __init__(self, x, y, enemies, screen, player, walls, dt, camcam, all_Sprite_Group, counter, item_group):
+        print("dropped an item")
+        self.x = x
+        self.y = y
+        self.enemies = enemies
+        self.screen = screen
+        self.player = player
+        self.walls = walls
+        self.dt = dt
+        self.camcam = camcam
+        self.all_Sprite_Group = all_Sprite_Group
+        self.counter = counter
+        self.item_Group = item_group
+
+
+        self.groups = self.all_Sprite_Group, self.item_Group
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.type, self.img = choice(list(settings.SCRAP_IMAGES.items()))
+        self.image = get_image_convert_alpha(self.img)
+        self.rect = self.image.get_rect()
+        self.pos = vec(0,0)
+        self.pos.x = x
+        self.pos.y = y
+        self.rect.center = self.pos
+        self.tween = tween.easeInOutSine
+        self.step = 0
+        self.dir = 1
+
+    def update(self):
+        # bobbing motion
+        offset = settings.BOB_RANGE * (self.tween(self.step / settings.BOB_RANGE) - 0.5)
+        self.rect.centery = self.pos.y + offset * self.dir
+        self.step += settings.BOB_SPEED
+        if self.step > settings.BOB_RANGE:
+            self.step = 0
+            self.dir *= -1
 
 

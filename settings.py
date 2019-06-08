@@ -124,8 +124,15 @@ ITEM_IMAGES = {'pepper': './images/food/1.png', 'candy': './images/food/2.png', 
                 'lemon': './images/food/33.png', 'peach': './images/food/34.png',
                 'raddish': './images/food/35.png'}
 
+SCRAP_IMAGES = {'shield': './images/scrap/icon_04.png',
+                'spike': './images/scrap/icon_16.png',
+                'spike2': './images/scrap/icon_43.png',
+                'scrap door': './images/scrap/icon_44.png'
+                }
 
-CARDS =  {'wheel': './images/cards/broken_wheel.png'}
+
+CARDS =  {'wheel': './images/cards/broken_wheel.png', 'tip': './images/cards/wagon_tip.png',
+          'attack': './images/cards/attack.png'}
 V_EFFECTS = {'item_pickup': './images/effects/tile00'}
 
 HEALTH_PACK_AMOUNT = 20
